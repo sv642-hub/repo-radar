@@ -1,0 +1,8 @@
+{
+  "name": "repo-dashboard",
+  "version": "0.1.0",
+  "description": "A one-page HTML dashboard of a GitHub repo, rebuilt daily: open PRs by what they need, open issues, a graph of how work links, closed work by release, and an optional plan of what is built and missing.",
+  "author": {"name": "sv642-hub"},
+  "license": "MIT",
+  "keywords": ["github", "dashboard", "pull-requests", "issues", "status"]
+}

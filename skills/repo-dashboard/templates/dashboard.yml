@@ -1,0 +1,51 @@
+# Rebuilds the repo dashboard from GitHub every day, and keeps it on the `dashboard` branch.
+# Written by repo-dashboard's init. The scripts it runs are in .github/dashboard/.
+#
+# To look at today's page:
+#   git fetch origin dashboard && git show origin/dashboard:index.html > dashboard.html
+# then open dashboard.html in a browser.
+#
+# The branch holds one commit, replaced every day, so old pages do not pile up in the repo.
+
+name: Dashboard
+
+on:
+  schedule:
+    - cron: "__CRON__"  # in UTC
+  workflow_dispatch:  # adds a "Run workflow" button on the Actions tab
+
+permissions:
+  contents: write  # to push the dashboard branch
+  pull-requests: read
+  issues: read
+  checks: read
+  statuses: read
+
+concurrency: dashboard
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install pyyaml==6.0.2
+
+      - name: Build the page from GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/dashboard/dashboard.py build --out "$RUNNER_TEMP/index.html"__PLAN_ARGS__
+
+      - name: Save it on the dashboard branch, replacing yesterday's
+        run: |
+          git switch --orphan dashboard
+          cp "$RUNNER_TEMP/index.html" index.html
+          git add index.html
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit --quiet -m "Dashboard for $(date -u +%F)"
+          git push --force origin dashboard

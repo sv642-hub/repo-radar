@@ -1,0 +1,14 @@
+[project]
+name = "repo-dashboard"
+version = "0.1.0"
+description = "A one-page HTML dashboard of a GitHub repo, rebuilt daily, as a Claude Code skill."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = ["pyyaml>=6"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

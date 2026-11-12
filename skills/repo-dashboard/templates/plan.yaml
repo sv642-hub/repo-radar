@@ -1,0 +1,36 @@
+# The plan: every part of the system, who owns it, and how far it is.
+# The dashboard's Plan tab is drawn from this file. Edit this file, never the page.
+#
+# Each item has a status:
+#   built      merged on main and working
+#   simulated  merged on main, but a stub, a fake, or a skeleton
+#   pr         in an open pull request; give its number as `pr`
+#   missing    not built yet
+# An item may also name the GitHub issue it comes from, as `issue`.
+#
+# Each pull request updates only its own items: mark them `pr` with its number.
+# Leave other people's items and `as_of` alone, so open pull requests do not all
+# edit the same lines. Once a week, one person marks merged items `built` (the
+# dashboard flags them) and sets `as_of` to the main commit and date checked.
+#
+# A box's owner is its own `owner`, else its group's. Use null for "not assigned".
+
+title: "My project: what is built"
+as_of: "not checked yet"
+
+people:  # owner name -> GitHub login, so `dashboard.py me` knows who you are
+  Your Name: your-github-login
+
+groups:
+  core:
+    title: Core
+    subtitle: "src/"
+    owner: Your Name
+    boxes:
+      - title: First part
+        items:
+          - {status: missing, text: "What this part must do, in a few words"}
+      - title: Second part
+        owner: null
+        items:
+          - {status: missing, text: "Another thing the system needs"}

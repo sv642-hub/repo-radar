@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+# Pages built by hand; the real one lives on the dashboard branch.
+dashboard.html
+# Local preview server config for Claude's browser pane.
+.claude/launch.json

@@ -1,0 +1,64 @@
+# The plan for Pantry Planner, a made-up app. See examples/make_demo_data.py.
+
+title: "Pantry Planner: what is built"
+as_of: "main at 1a2b3c4, checked 2026-11-05"
+
+people:
+  Ana Lee: ana-lee
+  Bo Kim: bokim
+  Cy Park: cypark
+  Dee Ross: dee-ross
+
+groups:
+  app:
+    title: App
+    subtitle: "app/"
+    owner: Ana Lee
+    boxes:
+      - title: Pantry list
+        items:
+          - {status: built, text: "Add, edit, and remove items"}
+          - {status: pr, pr: 39, text: "Scan barcodes with the phone camera"}
+          - {status: missing, text: "Warn before something expires"}
+      - title: Shopping list
+        items:
+          - {status: built, text: "Make a list from what is running low"}
+          - {status: pr, pr: 41, text: "Share a list by link", issue: 13}
+          - {status: pr, pr: 42, text: "Sort by aisle", issue: 14}
+      - title: Sign in
+        owner: Dee Ross
+        items:
+          - {status: built, text: "Sign in with an email link"}
+          - {status: simulated, text: "Households: one fake household for everyone"}
+
+  sync:
+    title: Sync
+    subtitle: "server/sync/"
+    owner: Bo Kim
+    boxes:
+      - title: Phone to server
+        items:
+          - {status: built, text: "Push local changes to the server"}
+          - {status: pr, pr: 38, text: "Pull changes from the server"}
+          - {status: pr, pr: 45, text: "Retry with backoff"}
+      - title: Offline
+        items:
+          - {status: pr, pr: 44, text: "Queue edits made offline", issue: 16}
+          - {status: missing, text: "Merge conflicting edits without losing data", issue: 17}
+
+  infra:
+    title: Infrastructure
+    subtitle: "deploy/"
+    owner: Cy Park
+    boxes:
+      - title: Database
+        items:
+          - {status: built, text: "Schema for lists and items"}
+          - {status: pr, pr: 47, text: "Nightly backup", issue: 18}
+      - title: Hosting
+        items:
+          - {status: built, text: "Deploy to a small VM with one command"}
+      - title: Monitoring
+        owner: null
+        items:
+          - {status: missing, text: "Alert when sync fails for more than an hour"}
