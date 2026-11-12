@@ -1,85 +1,88 @@
-# repo-dashboard
+# repo-radar
 
-A one-page HTML dashboard of a GitHub repo, rebuilt every morning. Open it and see
-what needs a person today, how the open work links up, and, if your team keeps a
-plan, which parts of the system are built, in review, or not started.
-
-It is a [Claude Code](https://claude.com/claude-code) skill, plus a small Python
-script that does the actual work. The skill sets the dashboard up in your repo and
-explains it; the script draws the page, so the daily rebuild runs in a GitHub Action
-with no AI and no API key.
+Everything in your GitHub repo that needs a person, on one page, every morning.
+Plus, if you want it, a map of what your team has built and what is still missing.
 
 ![The Plan tab of a made-up project](docs/screenshot-plan.png)
 
-![The Graph tab, in dark mode](docs/screenshot-graph.png)
+## Why we built this
 
-*Both pictures show Pantry Planner, a made-up project in `examples/demo/`.*
+On our team project, we had a hard time keeping track of what was already built and
+what still needed building. GitHub showed us the open pull requests, but not which
+part of the system each one belonged to, or which parts nobody had started yet.
+
+repo-radar puts both on one page, rebuilt every morning: what needs a person today,
+and a plan of what is built and what is still missing.
+
+**What about GitHub's project boards?** We like them, and if your team keeps one up to
+date, keep it. We needed two things a board did not give us. A board shows issues and
+pull requests, so the parts of the system nobody has opened an issue for stay
+invisible. And a board needs someone to add and move cards, while this page rebuilds
+itself from GitHub. It stops there on purpose: the page only reads. No assigning, no
+sprints, no dragging cards.
 
 ## What is on the page
 
 | Tab | What it shows |
 |---|---|
-| **Plan** | Only if your repo has a plan file. Every part of the system as a box, who owns it, and each item's status: built, a stub, in a pull request, or missing. A yellow tag marks an item whose pull request has merged or closed, so the plan needs updating. Open pull requests that no item points at are listed at the end. |
-| **Pull requests** | Open pull requests, sorted by what they need: ready to merge, needs review, waiting on the author, checks failing, draft. A "Start here" card picks up to five. |
-| **Issues** | Open issues: nobody on it yet, someone assigned, a pull request open. |
-| **Graph** | How the open work links: plan box → issue → pull request, sub-issues, "blocked by", and pull requests built on another's branch. |
-| **Done** | Pull requests and issues closed in the last 90 days, under the release that shipped them (or the month, if the repo has no releases). |
+| **Plan** | Only if your repo has a plan file. Every part of the system, who owns it, and what is built, in review, or missing. A yellow tag means GitHub disagrees with the plan, such as a PR that merged. |
+| **Pull requests** | Open PRs sorted by what they need: ready to merge, needs review, waiting on the author, checks failing, draft. "Start here" picks up to five. |
+| **Issues** | Open issues: nobody on it yet, someone assigned, a PR open. |
+| **Graph** | How the open work links up: plan box → issue → pull request. |
+| **Done** | What closed in the last 90 days, under the release that shipped it. |
 
-The page is one file with nothing loaded from the internet. It has a search box,
-dark mode, and a print layout. Every number and title links to GitHub.
+It is one HTML file with nothing loaded from the internet, with search, dark mode,
+and links to GitHub on every item.
 
-## Install
+![The Graph tab, in dark mode](docs/screenshot-graph.png)
+
+*Both pictures show Pantry Planner, a made-up project in `examples/demo/`.*
+
+## Try it
 
 You need Python 3.10 or newer, PyYAML (`pip install pyyaml`), and the
 [GitHub CLI](https://cli.github.com/) (`gh`), signed in.
 
-**As a Claude Code plugin.** In Claude Code:
+**With Claude Code**, install the plugin:
 
 ```
-/plugin install repo-dashboard --marketplace sv642-hub/repo-dashboard
+/plugin install repo-radar --marketplace sv642-hub/repo-radar
 ```
 
-Then ask Claude, in your project: "set up the repo dashboard".
+Then, in your project, ask Claude to "set up repo-radar". It asks a couple of
+questions, builds the page once so you can see it, and adds the daily rebuild.
 
-**Or copy the skill.** Copy `skills/repo-dashboard/` into your repo's
-`.claude/skills/` (for everyone on the repo) or `~/.claude/skills/` (just you).
-
-**Or skip Claude entirely.** The script works on its own:
+**Without Claude**, run the script inside any repo:
 
 ```bash
-python skills/repo-dashboard/scripts/dashboard.py build --out dashboard.html
+python skills/repo-radar/scripts/dashboard.py build --out dashboard.html
 ```
 
-## Set it up to rebuild every day
-
-From your repo's top folder:
+## Rebuild it every morning
 
 ```bash
-python <path to>/skills/repo-dashboard/scripts/dashboard.py init
+python <path to>/skills/repo-radar/scripts/dashboard.py init
 ```
 
-This writes the scripts to `.github/dashboard/` and a GitHub Action to
-`.github/workflows/dashboard.yml`. Add `--with-plan` for a starter plan in
-`docs/plan.yaml`, or `--plan path/to/plan.yaml` to use a plan you already have.
-Commit those files. Once they reach your default branch, the Action runs every day
-at 11:00 UTC (change it with `--cron`), and you can run it at once from the Actions
-tab.
+This adds the scripts to `.github/dashboard/` and a GitHub Action to
+`.github/workflows/dashboard.yml`. Add `--with-plan` for a starter plan, or
+`--plan path/to/plan.yaml` to use one you have. Commit them, and the Action rebuilds
+the page every day at 11:00 UTC (change it with `--cron`). Nothing in it calls an AI,
+so it needs no API key.
 
-The Action keeps the page on a branch called `dashboard`. It holds one commit,
-replaced each day, so old pages do not pile up. To open today's page:
+The page lives on a branch called `dashboard`, replaced each day. To open it:
 
 ```bash
 git fetch origin dashboard && git show origin/dashboard:index.html > dashboard.html
 ```
 
-then open `dashboard.html` in a browser. For a public repo, you can instead turn on
-GitHub Pages for the `dashboard` branch and get a web address. (Pages on a private
-repo needs a paid plan and may make the page public, so the branch is the default.)
+For a public repo, you can turn on GitHub Pages for that branch instead and get a web
+address.
 
 ## The plan file
 
-The plan is optional. It is for what GitHub cannot know: the parts of the system
-nobody has opened an issue or a pull request for yet.
+The plan is optional. It holds what GitHub cannot know: the parts of the system
+nobody has started.
 
 ```yaml
 title: "Pantry Planner: what is built"
@@ -98,63 +101,45 @@ groups:
           - {status: missing, text: "Sort by aisle"}
 ```
 
-Statuses: `built` (merged and working), `simulated` (merged, but a stub or fake),
-`pr` (in an open pull request, with its number), `missing`. The full format is at the
-top of [`dashboard_plan.py`](skills/repo-dashboard/scripts/dashboard_plan.py).
+Each item is `built`, `simulated` (merged, but a stub or fake), `pr` (with its
+number), or `missing`. The full format is at the top of
+[`dashboard_plan.py`](skills/repo-radar/scripts/dashboard_plan.py).
 
-How a team keeps it current: each pull request marks only its own items `pr`, so
-open pull requests do not edit the same lines. Once a week, one person marks merged
-items `built` (the dashboard flags them) and sets `as_of`.
+To keep it current without merge fights: each pull request updates only its own items,
+and once a week one person marks what merged (the page flags those) and sets `as_of`.
+
+## How it sorts things
+
+Only facts GitHub already has, no AI:
+
+- **Pull requests:** draft → checks failing → changes requested → approved → anything
+  else needs review. The first rule that fits wins.
+- **Issues:** an open PR closes it → someone is assigned → nobody is on it.
+- **Graph:** only links GitHub or the plan records: "Closes #12" in a PR, sub-issues,
+  "blocked by", a PR opened on another PR's branch, a plan item naming a PR or issue.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
 | `dashboard.py build --out page.html` | Ask GitHub, then draw the page |
-| `dashboard.py fetch --out data.json` | Only ask GitHub, and save what it said |
-| `dashboard.py build --data data.json --out page.html` | Draw from a saved file, offline |
-| `dashboard.py me` | One person's plan items, checked against their pull requests |
+| `dashboard.py me` | One person's plan items, checked against their PRs |
 | `dashboard.py init` | Add the scripts and the daily Action to a repo |
+| `dashboard.py fetch --out data.json` | Save what GitHub said, to draw later with `build --data` |
 
-Each takes `--help`.
-
-## Why not a GitHub project board?
-
-We like GitHub's project boards, and if your team already keeps one up to date, keep
-it. We built this because we needed two things a board did not give us:
-
-- **The parts nobody has started.** A board shows issues and pull requests. Our plan
-  also lists the parts of the system that do not have an issue yet, with an owner.
-- **No upkeep.** A board needs someone to add cards and move them. This page is
-  rebuilt from GitHub every morning, sorted so the first thing to do is at the top.
-
-It deliberately stops there: the page only reads. No assigning, no sprints, no
-dragging cards.
-
-## How it sorts things (no AI)
-
-- **Pull requests:** draft → checks failing → changes requested → approved → anything
-  else needs review. The first rule that fits wins.
-- **Issues:** has an open pull request that closes it → assigned → nobody on it.
-- **Graph links:** only links GitHub or the plan records ("Closes #12" in a pull
-  request, sub-issues, "blocked by", a pull request opened on another's branch, a
-  plan item naming a PR or issue). Closed work is left out.
-
-## Development
-
-```bash
-uv run pytest
-```
-
-The tests use `examples/demo/data.json`, made by `examples/make_demo_data.py`, so
-they need no network.
+Each takes `--help`. To run the tests: `uv run pytest`.
 
 ## Credits
 
-This grew out of a status diagram a course team kept for their project. The plan
-checks and the "where am I" report come from a Claude Code skill by Verness Chin.
-The idea of a daily triage page came from the dashboard built for
-[mcp-gateway-registry](https://github.com/agentic-community/mcp-gateway-registry).
+Built by Sebastian Villalobos ([@sv642-hub](https://github.com/sv642-hub)), Verness Chin
+([@verness](https://github.com/verness)), Ishika Gobin
+([@ishikagobin](https://github.com/ishikagobin)), and Sharanya Atluri
+([@saiatl2354](https://github.com/saiatl2354)).
+
+Thanks to our professor, Amit Arora ([@aarora79](https://github.com/aarora79)), whose
+daily triage dashboard for
+[mcp-gateway-registry](https://github.com/agentic-community/mcp-gateway-registry)
+inspired the morning page, and who suggested making this a skill any team can use.
 
 ## License
 

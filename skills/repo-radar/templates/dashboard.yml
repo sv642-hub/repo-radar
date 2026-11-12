@@ -1,5 +1,5 @@
 # Rebuilds the repo dashboard from GitHub every day, and keeps it on the `dashboard` branch.
-# Written by repo-dashboard's init. The scripts it runs are in .github/dashboard/.
+# Written by repo-radar's init. The scripts it runs are in .github/dashboard/.
 #
 # To look at today's page:
 #   git fetch origin dashboard && git show origin/dashboard:index.html > dashboard.html

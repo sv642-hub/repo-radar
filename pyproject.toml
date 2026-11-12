@@ -1,5 +1,5 @@
 [project]
-name = "repo-dashboard"
+name = "repo-radar"
 version = "0.1.0"
 description = "A one-page HTML dashboard of a GitHub repo, rebuilt daily, as a Claude Code skill."
 readme = "README.md"

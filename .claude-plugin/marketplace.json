@@ -1,12 +1,12 @@
 {
-  "name": "repo-dashboard",
-  "description": "repo-dashboard: a daily one-page HTML status dashboard for GitHub repos.",
+  "name": "repo-radar",
+  "description": "repo-radar: a daily one-page view of everything in a GitHub repo that needs attention, and the team plan.",
   "owner": {
     "name": "sv642-hub"
   },
   "plugins": [
     {
-      "name": "repo-dashboard",
+      "name": "repo-radar",
       "source": "./",
       "description": "A one-page HTML dashboard of a GitHub repo, rebuilt daily by a GitHub Action."
     }

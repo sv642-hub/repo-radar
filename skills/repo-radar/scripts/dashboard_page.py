@@ -463,7 +463,7 @@ def render(data: dict[str, Any], plan: dict[str, Any] | None) -> str:
         '<input id="search" type="search" placeholder="Search titles, people, labels…" aria-label="Search">'
         '<button id="theme" type="button">Dark mode</button></header>'
         f"<main>{panels}</main>"
-        '<footer class="note">Made by repo-dashboard. The page is rebuilt from GitHub; '
+        '<footer class="note">Made by repo-radar. The page is rebuilt from GitHub; '
         "do not edit it by hand.</footer>"
         f"<script>{PAGE_SCRIPT}</script></body></html>\n"
     )
@@ -584,7 +584,7 @@ line.edge{marker-end:none;stroke-width:2}
 """
 
 THEME_SCRIPT = """<script>
-try{var t=localStorage.getItem('repo-dashboard-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}
+try{var t=localStorage.getItem('repo-radar-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}
 </script>"""
 
 PAGE_SCRIPT = """
@@ -631,7 +631,7 @@ function showTheme() { themeButton.textContent = isDark() ? 'Light mode' : 'Dark
 themeButton.addEventListener('click', () => {
   const next = isDark() ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
-  try { localStorage.setItem('repo-dashboard-theme', next); } catch (e) {}
+  try { localStorage.setItem('repo-radar-theme', next); } catch (e) {}
   showTheme();
 });
 showTheme();

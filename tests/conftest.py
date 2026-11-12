@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / "skills" / "repo-dashboard" / "scripts"
+SCRIPTS = ROOT / "skills" / "repo-radar" / "scripts"
 DEMO = ROOT / "examples" / "demo"
 sys.path.insert(0, str(SCRIPTS))
 

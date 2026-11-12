@@ -23,7 +23,7 @@ def test_the_test_plan_and_the_starter_template_pass_the_checks(plan: dict) -> N
     from conftest import ROOT
 
     plans.check_plan(plan)
-    template = ROOT / "skills" / "repo-dashboard" / "templates" / "plan.yaml"
+    template = ROOT / "skills" / "repo-radar" / "templates" / "plan.yaml"
     plans.load_plan(template.read_text(encoding="utf-8"))
 
 

@@ -1,9 +1,9 @@
 ---
-name: repo-dashboard
-description: Build a one-page HTML dashboard of a GitHub repo (open pull requests sorted by what they need, open issues by whether anyone is on them, a graph of how PRs, issues and plan boxes link, and recently closed work by release), set it up to rebuild every day with a GitHub Action, and compare a team's plan file with GitHub. Use when someone wants a status dashboard or morning view of a repo, asks "where are we", "where am I", "what is left in my section", "what needs review", "is my PR on the plan", wants their PR put on the plan, or runs the weekly plan refresh.
+name: repo-radar
+description: repo-radar. Build a one-page HTML dashboard of a GitHub repo (open pull requests sorted by what they need, open issues by whether anyone is on them, a graph of how PRs, issues and plan boxes link, and recently closed work by release), set it up to rebuild every day with a GitHub Action, and compare a team's plan file with GitHub. Use when someone wants a status dashboard or morning view of a repo, asks "where are we", "where am I", "what is left in my section", "what needs review", "is my PR on the plan", wants their PR put on the plan, or runs the weekly plan refresh.
 ---
 
-# Repo dashboard
+# repo-radar
 
 The dashboard is one HTML file, drawn from GitHub by `scripts/dashboard.py`. It
 needs Python 3.10+, PyYAML, and the GitHub CLI (`gh`), signed in. Nothing in it

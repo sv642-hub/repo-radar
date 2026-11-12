@@ -4,7 +4,7 @@ The people, pull requests, and issues are invented. The file has the same shape
 `dashboard.py fetch` saves, so the demo page and the tests need no network:
 
     python examples/make_demo_data.py
-    python skills/repo-dashboard/scripts/dashboard.py build \
+    python skills/repo-radar/scripts/dashboard.py build \
         --data examples/demo/data.json --plan examples/demo/plan.yaml --out demo.html
 """
 
