@@ -101,3 +101,24 @@ def test_without_releases_done_items_are_grouped_by_month(demo_data: dict) -> No
 def test_all_prs_includes_prs_fetched_one_by_one(data: dict) -> None:
     data["other_prs"] = [pr(99, "a", "MERGED")]
     assert 99 in github.all_prs(data)
+
+
+class _Ran:
+    def __init__(self, code: int, out: str = "", err: str = "") -> None:
+        self.returncode, self.stdout, self.stderr = code, out, err
+
+
+def test_read_file_tells_a_missing_file_from_a_repo_it_cannot_see(monkeypatch: pytest.MonkeyPatch) -> None:
+    """GitHub says "Not Found" for both; only the second is an error worth reporting."""
+    can_see = {"me/public"}
+
+    def fake_run(args: list[str], **_: Any) -> _Ran:
+        path = args[2]
+        if "/contents/" in path:
+            return _Ran(1, err="gh: Not Found (HTTP 404)")
+        return _Ran(0) if path == f"repos/{next(iter(can_see))}" else _Ran(1, err="gh: Not Found (HTTP 404)")
+
+    monkeypatch.setattr(github.subprocess, "run", fake_run)
+    assert github.read_file("me/public", "docs/plan.yaml") is None
+    with pytest.raises(RuntimeError, match="cannot see them/private.*RADAR_TOKEN"):
+        github.read_file("them/private", "docs/plan.yaml")

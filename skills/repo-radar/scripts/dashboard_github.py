@@ -52,7 +52,14 @@ def _gh(args: list[str]) -> Any:
 
 
 def read_file(repo: str, path: str) -> str | None:
-    """A file's text from a repo's default branch on GitHub, or None if there is no such file."""
+    """A file's text from a repo's default branch on GitHub, or None if there is no such file.
+
+    GitHub answers "Not Found" both for a missing file and for a repo the token may not
+    see, so on "Not Found" this checks the repo itself, to say which one it was.
+
+    Raises:
+        RuntimeError: if the repo cannot be seen, or GitHub fails another way.
+    """
     result = subprocess.run(
         ["gh", "api", f"repos/{repo}/contents/{quote(path)}", "-H", "Accept: application/vnd.github.raw+json"],
         capture_output=True,
@@ -62,6 +69,12 @@ def read_file(repo: str, path: str) -> str | None:
     if result.returncode == 0:
         return result.stdout
     if "404" in result.stderr or "Not Found" in result.stderr:
+        visible = subprocess.run(["gh", "api", f"repos/{repo}", "--silent"], capture_output=True, check=False)
+        if visible.returncode != 0:
+            raise RuntimeError(
+                f"cannot see {repo}: it does not exist, or it is private and the token "
+                "cannot read it (a watch list needs a RADAR_TOKEN secret for private repos)"
+            )
         return None
     raise RuntimeError(f"reading {path} from {repo} failed: {result.stderr.strip()}")
 
