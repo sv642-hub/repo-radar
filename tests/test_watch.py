@@ -178,3 +178,42 @@ def test_the_watch_actions_publish_step_keeps_only_the_pages(tmp_path: Path) -> 
         ["git", "ls-tree", "--name-only", "dashboard"], cwd=remote, capture_output=True, text=True
     ).stdout.split()
     assert files == ["a__one.html", "index.html"]
+
+
+@pytest.mark.parametrize(
+    ("stage", "error", "shown"),
+    [
+        ("data", json.JSONDecodeError("Expecting value", "", 0), "JSONDecodeError"),
+        ("data", KeyError("open_prs"), "KeyError: 'open_prs'"),
+        ("render", StopIteration(), "StopIteration"),
+    ],
+)
+def test_an_unexpected_error_in_one_repo_does_not_stop_the_rest(stage: str, error: Exception, shown: str) -> None:
+    get_plan, get_data, _ = _fakes({})
+
+    def flaky_data(repo: str, extra: set[int]) -> dict:
+        if stage == "data" and repo == "b/bad":
+            raise error
+        return get_data(repo, extra)
+
+    def flaky_render(data: dict, plan: dict | None) -> str:
+        if stage == "render" and data["repo"] == "b/bad":
+            raise error
+        return page.render(data, plan)
+
+    entries = watching.load_watch_list("repos: [a/one, b/bad, c/three]")
+    pages, rows = watching.watch(entries, get_plan, flaky_data, flaky_render)
+    assert set(pages) == {"a__one.html", "c__three.html"}
+    assert [r["repo"] for r in rows] == ["a/one", "b/bad", "c/three"]
+    assert rows[1]["error"].startswith("could not build its page (") and shown in rows[1]["error"]
+    assert not rows[0].get("error") and not rows[2].get("error")
+
+
+def test_a_keyboard_interrupt_still_stops_the_build() -> None:
+    get_plan, get_data, _ = _fakes({})
+
+    def interrupted(repo: str, extra: set[int]) -> dict:
+        raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        watching.watch(watching.load_watch_list("repos: [a/one]"), get_plan, interrupted, page.render)

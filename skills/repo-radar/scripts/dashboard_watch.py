@@ -14,6 +14,7 @@ Each repo's plan is read from that repo on GitHub, at `plan` or else at
 docs/plan.yaml. A repo without one simply gets no Plan tab.
 """
 
+import logging
 import re
 from datetime import datetime, timezone
 from typing import Any, Callable
@@ -25,6 +26,7 @@ import dashboard_plan as plans
 
 REPO_NAME = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 DEFAULT_PLAN = "docs/plan.yaml"
+logger = logging.getLogger(__name__)
 
 
 class WatchListError(ValueError):
@@ -111,6 +113,11 @@ def summary(repo: str, data: dict[str, Any], plan: dict[str, Any] | None) -> dic
     return row
 
 
+def _error_row(repo: str, message: str) -> dict[str, Any]:
+    """The overview row for a repo whose page could not be built."""
+    return {"repo": repo, "url": f"https://github.com/{repo}", "error": message}
+
+
 def watch(
     entries: list[dict[str, Any]],
     get_plan: Callable[[str, str], str | None],
@@ -144,7 +151,10 @@ def watch(
             pages[page_name(repo)] = render_page(data, plan)
             rows.append(summary(repo, data, plan))
         except (plans.PlanError, RuntimeError) as error:
-            rows.append({"repo": repo, "url": f"https://github.com/{repo}", "error": str(error)})
+            rows.append(_error_row(repo, str(error)))
+        except Exception as error:  # noqa: BLE001 - one repo's bug must not stop the others
+            logger.exception(f"{repo}: unexpected error while building its page")
+            rows.append(_error_row(repo, f"could not build its page ({type(error).__name__}: {error})"))
     return pages, rows
 
 
