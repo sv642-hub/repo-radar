@@ -83,7 +83,7 @@ def test_generated_plan_argument_runs_with_shell_characters(tmp_path, name, demo
     (tmp_path / 'data.json').write_text(json.dumps(demo_data))
     # Exercise the generated shell argument, using offline data and a temporary output.
     command = command.replace('python ', shlex.quote(sys.executable) + ' ', 1)
-    command = command.replace('"$RUNNER_TEMP/index.html"', 'index.html') + ' --data data.json'
+    command = command.replace('"$RUNNER_TEMP/index.html"', 'index.html').rstrip() + ' --data data.json'
     result = subprocess.run(['bash', '-c', command], cwd=tmp_path, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     assert (tmp_path / 'index.html').exists()
