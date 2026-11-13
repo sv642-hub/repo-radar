@@ -96,3 +96,15 @@ def test_html_has_accessible_tabs_and_visible_fetch_warning(demo_data):
     assert 'role="tabpanel" aria-labelledby="tab-prs"' in html
     assert 'Relationship links unavailable &lt;retry&gt;' in html
     assert 'id="no-results" role="status"' in html
+
+
+@pytest.mark.parametrize(
+    ("missing", "readable", "expected"),
+    [
+        (1, 2, "1 repo unavailable. Totals include only the 2 readable repos."),
+        (2, 1, "2 repos unavailable. Totals include only the 1 readable repo."),
+        (3, 0, "3 repos unavailable. Totals include only the 0 readable repos."),
+    ],
+)
+def test_unavailable_note_counts_repos_with_correct_plurals(missing, readable, expected):
+    assert page._unavailable_note(missing, readable) == expected

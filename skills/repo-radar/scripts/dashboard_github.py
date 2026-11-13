@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 OPEN_PR_FIELDS = (
     "number,title,state,author,url,isDraft,createdAt,updatedAt,baseRefName,headRefName,"
     "reviewDecision,statusCheckRollup,closingIssuesReferences,additions,deletions,"
-    "changedFiles,labels,headRepository,headRepositoryOwner,isCrossRepository"
+    "changedFiles,labels,headRepository,headRepositoryOwner"
 )
 CLOSED_PR_FIELDS = "number,title,state,author,url,createdAt,closedAt,mergedAt,labels"
 OPEN_ISSUE_FIELDS = (

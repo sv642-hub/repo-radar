@@ -496,6 +496,13 @@ def _count(n: Any, cls: str = "") -> str:
     return f'<td class="num">{_chip(n, cls) if n and cls else _e(n)}</td>'
 
 
+def _unavailable_note(missing: int, readable: int) -> str:
+    """Say how many watched repos could not be read, with singular and plural right."""
+    repos = "repo" if missing == 1 else "repos"
+    readable_repos = "readable repo" if readable == 1 else "readable repos"
+    return f"{missing} {repos} unavailable. Totals include only the {readable} {readable_repos}."
+
+
 def render_index(rows: list[dict[str, Any]], built_at: str) -> str:
     """The overview page for a watch list: one row per repo, linking to its page."""
     good = [r for r in rows if not r.get("error")]
@@ -544,7 +551,7 @@ def render_index(rows: list[dict[str, Any]], built_at: str) -> str:
         )
     main = (
         '<section class="tab active" id="overview">'
-        + (f'<p class="explain">{len(rows) - len(good)} repos unavailable. Totals include only the {len(good)} readable repos.</p>' if len(good) != len(rows) else "")
+        + (f'<p class="explain">{_unavailable_note(len(rows) - len(good), len(good))}</p>' if len(good) != len(rows) else "")
         + tiles
         + '<p class="explain">Each repo has its own page with its pull requests, issues, graph, '
         "and plan. A yellow number under Plan to update counts items whose pull request has "
@@ -639,7 +646,7 @@ border:1px solid var(--btn-line);color:var(--muted);text-decoration:none;white-s
 .chip.warn{border-color:var(--gold);color:var(--warn-fg);background:var(--warn-bg);cursor:help}
 .chip.red{border-color:var(--red-line);color:var(--unowned)}
 .chip.label{color:var(--purple);border-color:var(--purple)}
-.note{color:var(--faint);font-size:12px}
+.note{color:var(--muted);font-size:12px}
 .people{font-size:12px;color:var(--muted)}
 a{color:var(--link)}
 .title-link{color:inherit;text-decoration:none}
