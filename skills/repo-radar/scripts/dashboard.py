@@ -19,6 +19,7 @@ import argparse
 import json
 import logging
 import shutil
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -144,7 +145,7 @@ def init(repo_dir: Path, plan: Path | None, with_plan: bool, cron: str, force: b
     """
     plan_path = plan or DEFAULT_PLAN
     workflow = (TEMPLATES / "dashboard.yml").read_text(encoding="utf-8")
-    plan_args = f" --plan {plan_path.as_posix()}" if plan else ""
+    plan_args = f" --plan {shlex.quote(plan_path.as_posix())}" if plan else ""
     workflow = workflow.replace("__CRON__", cron).replace("__PLAN_ARGS__", plan_args)
     texts = {repo_dir / WORKFLOW: workflow}
     if with_plan:

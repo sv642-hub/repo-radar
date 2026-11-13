@@ -31,6 +31,8 @@ def open_pr(number, title, login, created, head, *, base="main", draft=False, re
         "number": number, "title": title, "state": "OPEN", "author": {"login": login},
         "url": f"{URL}/pull/{number}", "isDraft": draft, "createdAt": created,
         "updatedAt": created, "baseRefName": base, "headRefName": head,
+        "headRepository": {"name": "pantry-planner"},
+        "headRepositoryOwner": {"login": "example-org"}, "isCrossRepository": False,
         "reviewDecision": review, "statusCheckRollup": _checks(checks),
         "closingIssuesReferences": [
             {"number": n, "url": f"{URL}/issues/{n}"} for n in closes

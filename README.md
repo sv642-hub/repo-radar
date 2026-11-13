@@ -38,6 +38,15 @@ and links to GitHub on every item.
 
 *Both pictures show Pantry Planner, a made-up project in `examples/demo/`.*
 
+## Two modes
+
+| Mode | Where it runs | Dashboard structure |
+|---|---|---|
+| Engineer | In the repo you work on | One dashboard with Plan, PRs, Issues, Graph, and Done views |
+| Manager | In a separate monitoring repo | One overview for comparing repos, with a detail dashboard per repo and a link back |
+
+Manager mode keeps individual repo details on separate pages so unrelated plans and work do not overwhelm the comparison view. All pages are built together by the same daily job.
+
 ## Try it
 
 You need Python 3.10 or newer, PyYAML (`pip install pyyaml`), and the
@@ -74,7 +83,7 @@ python skills/repo-radar/scripts/dashboard.py build --repo owner/name --out dash
 Either way, the daily rebuild is a GitHub Action with no AI in it, so it needs no API
 key. The pages live on a branch called `dashboard`, replaced each day.
 
-## For the people working on a repo
+## Engineer mode: one repo dashboard
 
 Add repo-radar to the repo itself. From its top folder:
 
@@ -94,7 +103,7 @@ git fetch origin dashboard && git show origin/dashboard:index.html > dashboard.h
 For a public repo, you can turn on GitHub Pages for the `dashboard` branch instead and
 get a web address.
 
-## For someone watching several repos
+## Manager mode: overview and repo dashboards
 
 A manager, a teacher, or anyone following more than one team. Nothing is added to the
 repos you watch: you list them in one repo of your own.
@@ -128,7 +137,9 @@ mkdir -p radar && git fetch origin dashboard && git archive origin/dashboard | t
 
 then open `radar/index.html`.
 
-**Private repos:** the Action can read public repos and its own repo. To watch private
+**Private repos:** Keep the monitoring repo private when watching private repos. Its `dashboard` branch contains PR and issue titles, people, and plan details from every watched repo; a public monitoring repo exposes those details. GitHub Pages must also have suitable access controls.
+
+**Token access:** the Action can read public repos and its own repo. To watch private
 ones, create a GitHub token that can read them and save it in your watching repo as a
 secret named `RADAR_TOKEN` (Settings → Secrets and variables → Actions).
 

@@ -17,6 +17,13 @@
    "updatedAt": "2026-11-03T10:00:00Z",
    "baseRefName": "main",
    "headRefName": "app/share-link",
+   "headRepository": {
+    "name": "pantry-planner"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "isCrossRepository": false,
    "reviewDecision": "APPROVED",
    "statusCheckRollup": [
     {
@@ -50,6 +57,13 @@
    "updatedAt": "2026-11-06T09:00:00Z",
    "baseRefName": "main",
    "headRefName": "app/sort-aisle",
+   "headRepository": {
+    "name": "pantry-planner"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "isCrossRepository": false,
    "reviewDecision": "REVIEW_REQUIRED",
    "statusCheckRollup": [
     {
@@ -83,6 +97,13 @@
    "updatedAt": "2026-11-10T15:00:00Z",
    "baseRefName": "app/sort-aisle",
    "headRefName": "app/aisle-memory",
+   "headRepository": {
+    "name": "pantry-planner"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "isCrossRepository": false,
    "reviewDecision": "",
    "statusCheckRollup": [
     {
@@ -111,6 +132,13 @@
    "updatedAt": "2026-10-28T12:00:00Z",
    "baseRefName": "main",
    "headRefName": "sync/offline-queue",
+   "headRepository": {
+    "name": "pantry-planner"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "isCrossRepository": false,
    "reviewDecision": "CHANGES_REQUESTED",
    "statusCheckRollup": [
     {
@@ -144,6 +172,13 @@
    "updatedAt": "2026-11-09T08:30:00Z",
    "baseRefName": "main",
    "headRefName": "sync/retry",
+   "headRepository": {
+    "name": "pantry-planner"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "isCrossRepository": false,
    "reviewDecision": "",
    "statusCheckRollup": [
     {
@@ -172,6 +207,13 @@
    "updatedAt": "2026-11-11T04:00:00Z",
    "baseRefName": "main",
    "headRefName": "dependabot/pip/pytest-9.1",
+   "headRepository": {
+    "name": "pantry-planner"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "isCrossRepository": false,
    "reviewDecision": "",
    "statusCheckRollup": [
     {
@@ -204,6 +246,13 @@
    "updatedAt": "2026-11-05T14:00:00Z",
    "baseRefName": "main",
    "headRefName": "infra/nightly-backup",
+   "headRepository": {
+    "name": "pantry-planner"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "isCrossRepository": false,
    "reviewDecision": "REVIEW_REQUIRED",
    "statusCheckRollup": [
     {
@@ -237,6 +286,13 @@
    "updatedAt": "2026-11-11T16:00:00Z",
    "baseRefName": "main",
    "headRefName": "docs/run-locally",
+   "headRepository": {
+    "name": "pantry-planner"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "isCrossRepository": false,
    "reviewDecision": "",
    "statusCheckRollup": [
     {

@@ -50,12 +50,20 @@ def edges(plan: dict[str, Any] | None, data: dict[str, Any]) -> list[tuple[str, 
                 found.append((f"issue:{number}", f"pr:{pr['number']}", "closes"))
     for issue in data["open_issues"]:
         parent = (issue.get("parent") or {}).get("number")
-        if parent in open_issues:
+        if parent in open_issues and closes({"closingIssuesReferences": [issue["parent"]]}, data["repo"]):
             found.append((f"issue:{parent}", f"issue:{issue['number']}", "sub"))
         for blocker in (issue.get("blockedBy") or {}).get("nodes") or []:
-            if blocker.get("number") in open_issues:
+            if blocker.get("number") in open_issues and closes({"closingIssuesReferences": [blocker]}, data["repo"]):
                 found.append((f"issue:{blocker['number']}", f"issue:{issue['number']}", "blocks"))
-    branches = {pr["headRefName"]: number for number, pr in open_prs.items()}
+    # A fork's branch named main is not this repo's main. Older saved data without
+    # repository identity cannot prove a stack, so omit that inferred link.
+    branches = {}
+    for number, pr in open_prs.items():
+        head = pr.get("headRepository") or {}
+        owner = pr.get("headRepositoryOwner") or {}
+        full_name = head.get("nameWithOwner") or f"{owner.get('login', '')}/{head.get('name', '')}"
+        if full_name.lower() == data["repo"].lower():
+            branches[pr["headRefName"]] = number
     for number, pr in open_prs.items():
         base = branches.get(pr["baseRefName"])
         if base is not None and base != number:

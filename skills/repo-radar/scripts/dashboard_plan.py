@@ -86,6 +86,8 @@ def check_plan(plan: Any, source: str = "plan") -> None:
     ):
         _fail(source, "people must map each owner name to a GitHub login")
     for key, group in plan["groups"].items():
+        if not isinstance(key, str) or not key or "/" in key:
+            _fail(source, "group keys must be nonempty strings without slashes")
         if not isinstance(group, dict) or not isinstance(group.get("title"), str):
             _fail(source, f"group {key} needs a title")
         if not isinstance(group.get("boxes"), list) or not group["boxes"]:

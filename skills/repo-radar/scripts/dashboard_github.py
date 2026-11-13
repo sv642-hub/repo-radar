@@ -18,11 +18,11 @@ logger = logging.getLogger(__name__)
 OPEN_PR_FIELDS = (
     "number,title,state,author,url,isDraft,createdAt,updatedAt,baseRefName,headRefName,"
     "reviewDecision,statusCheckRollup,closingIssuesReferences,additions,deletions,"
-    "changedFiles,labels"
+    "changedFiles,labels,headRepository,headRepositoryOwner,isCrossRepository"
 )
 CLOSED_PR_FIELDS = "number,title,state,author,url,createdAt,closedAt,mergedAt,labels"
 OPEN_ISSUE_FIELDS = (
-    "number,title,state,author,url,createdAt,updatedAt,labels,assignees,parent,blockedBy"
+    "id,number,title,state,author,url,createdAt,updatedAt,labels,assignees"
 )
 CLOSED_ISSUE_FIELDS = "number,title,state,stateReason,author,url,createdAt,closedAt,labels"
 ONE_PR_FIELDS = "number,title,state,author,url,isDraft,headRefName,mergedAt,closedAt"
@@ -90,6 +90,31 @@ def _listed(kind: str, state: str, fields: str, limit: int, repo: list[str], sea
     return found
 
 
+def issue_relationships(issues: list[dict[str, Any]]) -> list[str]:
+    """Enrich CLI issues via GraphQL; unavailable relationships must not hide the repo."""
+    warnings = []
+    by_id = {i["id"]: i for i in issues if i.get("id")}
+    ids = list(by_id)
+    for offset in range(0, len(ids), 50):
+        query = "query { nodes(ids: " + json.dumps(ids[offset:offset + 50]) + """ ) {
+          ... on Issue { id parent { number url }
+            blockedBy(first: 100) { nodes { number url } pageInfo { hasNextPage } }
+          }
+        }}"""
+        try:
+            result = _gh(["api", "graphql", "-f", "query=" + query])
+            if result.get("errors"):
+                raise RuntimeError("GitHub could not return issue relationships")
+            for node in result["data"]["nodes"]:
+                if node and node["id"] in by_id:
+                    by_id[node["id"]].update(parent=node.get("parent"), blockedBy=node.get("blockedBy"))
+                    if (node.get("blockedBy") or {}).get("pageInfo", {}).get("hasNextPage"):
+                        warnings.append("Some issue dependency links exceed the 100-link limit and are omitted.")
+        except RuntimeError:
+            warnings.append("Some issue relationship links are unavailable; PR and issue lists are still shown.")
+    return list(dict.fromkeys(warnings))
+
+
 def fetch(
     repo: str | None,
     days: int,
@@ -123,6 +148,7 @@ def fetch(
         "releases": _gh(["release", "list", *flag, "--limit", "100", "--json", "tagName,publishedAt"]),
         "other_prs": [],
     }
+    data["warnings"] = issue_relationships(data["open_issues"])
     known = {pr["number"] for pr in data["open_prs"] + data["closed_prs"]}
     for number in sorted(extra_prs - known):
         try:

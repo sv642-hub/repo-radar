@@ -448,7 +448,7 @@ def _page(title: str, header: str, main: str) -> str:
         f"<header>{header}"
         '<input id="search" type="search" placeholder="Search titles, people, labels…" aria-label="Search">'
         '<button id="theme" type="button">Dark mode</button></header>'
-        f"<main>{main}</main>"
+        f'<main>{main}<p id="no-results" role="status" hidden>No matches. Try a different search.</p></main>'
         '<footer class="note">Made by repo-radar. The page is rebuilt from GitHub; '
         "do not edit it by hand.</footer>"
         f"<script>{PAGE_SCRIPT}</script></body></html>\n"
@@ -470,21 +470,22 @@ def render(data: dict[str, Any], plan: dict[str, Any] | None, back: str | None =
         ("done", "Done", _done_tab(data)),
     ]
     buttons = "".join(
-        f'<button data-tab="{key}"{" class=active" if i == 0 else ""}>{_e(label)}</button>'
+        f'<button type="button" role="tab" id="tab-{key}" aria-controls="{key}" aria-selected="{str(i == 0).lower()}" tabindex="{0 if i == 0 else -1}" data-tab="{key}"{" class=active" if i == 0 else ""}>{_e(label)}</button>'
         for i, (key, label, _) in enumerate(tabs)
     )
     panels = "".join(
-        f'<section class="tab{" active" if i == 0 else ""}" id="{key}">{body}</section>'
+        f'<section role="tabpanel" aria-labelledby="tab-{key}" tabindex="0" class="tab{" active" if i == 0 else ""}" id="{key}">{body}</section>'
         for i, (key, _, body) in enumerate(tabs)
     )
     built = data["fetched_at"].replace("T", " ").removesuffix("Z")
     header = (
-        (f'<a class="back" href="{_e(back)}">← All repos</a>' if back else "")
+        (f'<a class="back" href="{_e(back)}">← Manager overview</a>' if back else "")
         + f'<h1>{_a(data["url"], data["repo"], "title-link")}</h1>'
         f'<span class="note">from GitHub, {_e(built)} UTC</span>'
-        f'<nav class="tabs">{buttons}</nav>'
+        f'<nav class="tabs" role="tablist" aria-label="Repository views">{buttons}</nav>'
     )
-    return _page(f"{data['repo']} dashboard", header, panels)
+    warnings = "".join(f'<p class="explain">{_e(w)}</p>' for w in data.get("warnings", []))
+    return _page(f"{data['repo']} dashboard", header, warnings + panels)
 
 
 # ---------------------------------------------------------------- The overview (watch list)
@@ -522,7 +523,7 @@ def render_index(rows: list[dict[str, Any]], built_at: str) -> str:
                 f'<td colspan="9" class="error">Could not read it: {_e(r["error"])}</td></tr>'
             )
             continue
-        name += f'<br><a href="{_e(r["page"])}">open its page →</a></td>'
+        name += f'<br><a href="{_e(r["page"])}">View repo dashboard →</a></td>'
         plan = r["plan"]
         plan_cells = (
             f'<td class="num">{plan["built"]} of {plan["items"]}</td>' + _count(plan["to_update"], "warn")
@@ -543,6 +544,7 @@ def render_index(rows: list[dict[str, Any]], built_at: str) -> str:
         )
     main = (
         '<section class="tab active" id="overview">'
+        + (f'<p class="explain">{len(rows) - len(good)} repos unavailable. Totals include only the {len(good)} readable repos.</p>' if len(good) != len(rows) else "")
         + tiles
         + '<p class="explain">Each repo has its own page with its pull requests, issues, graph, '
         "and plan. A yellow number under Plan to update counts items whose pull request has "
@@ -551,7 +553,7 @@ def render_index(rows: list[dict[str, Any]], built_at: str) -> str:
         + f'<tbody>{"".join(body)}</tbody></table></div></section>'
     )
     built = built_at.replace("T", " ").removesuffix("Z")
-    header = f'<h1>repo-radar</h1><span class="note">{len(rows)} repos, from GitHub, {_e(built)} UTC</span>'
+    header = f'<h1>repo-radar · Manager overview</h1><span class="note">{len(rows)} repos, from GitHub, {_e(built)} UTC</span>'
     return _page("repo-radar overview", header, main)
 
 
@@ -580,7 +582,8 @@ color:var(--fg);font-size:14px}
 [hidden]{display:none!important}
 header{padding:14px 24px;border-bottom:1px solid var(--line);display:flex;gap:10px 18px;
 align-items:center;flex-wrap:wrap}
-header h1{font-size:20px;margin:0}
+header h1{font-size:20px;margin:0;overflow-wrap:anywhere}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .tabs{display:flex;flex-wrap:wrap;gap:6px}
 .tabs button,#theme{border:1px solid var(--btn-line);background:var(--btn-bg);color:var(--fg);
 padding:6px 12px;border-radius:6px;cursor:pointer;font-size:14px}
@@ -620,6 +623,7 @@ border-radius:8px;padding:8px 10px;background:var(--card-bg)}
 .owner.unowned{color:var(--unowned)}
 .status{color:var(--muted);font-size:12px;text-align:right;white-space:nowrap}
 ul{list-style:none;padding:0;margin:6px 0 0}
+.item>div{min-width:0;overflow-wrap:anywhere}
 .item{display:flex;gap:8px;margin:6px 0;line-height:1.4}
 .icon{flex:none;box-sizing:border-box;width:13px;height:13px;border-radius:50%;margin-top:3px;
 border:1.5px solid var(--faint);display:inline-block}
@@ -642,7 +646,7 @@ a{color:var(--link)}
 .title-link:hover{color:var(--link);text-decoration:underline}
 .handle{color:var(--owner);font-weight:600;text-decoration:none}
 .graph-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--section-bg)}
-.graph{display:block;max-width:100%;height:auto;font-family:inherit}
+.graph{display:block;min-width:700px;max-width:100%;height:auto;font-family:inherit}
 .graph .cluster{transition:opacity .15s}
 .graph:hover .cluster{opacity:.3}.graph .cluster:hover{opacity:1}
 .graph .cluster.dim{opacity:.12}
@@ -690,9 +694,23 @@ const searchBox = document.getElementById('search');
 const themeButton = document.getElementById('theme');
 
 tabButtons.forEach(button => button.addEventListener('click', () => {
-  tabButtons.forEach(b => b.classList.toggle('active', b === button));
+  tabButtons.forEach(b => {
+    b.classList.toggle('active', b === button);
+    b.setAttribute('aria-selected', String(b === button));
+    b.tabIndex = b === button ? 0 : -1;
+  });
   document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.id === button.dataset.tab));
   applySearch();
+}));
+
+tabButtons.forEach((button, index) => button.addEventListener('keydown', event => {
+  const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+  if (!keys.includes(event.key)) return;
+  event.preventDefault();
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabButtons.length - 1 :
+    (index + (event.key === 'ArrowRight' ? 1 : -1) + tabButtons.length) % tabButtons.length;
+  tabButtons[next].click();
+  tabButtons[next].focus();
 }));
 
 // Show only the rows that match the search, and the cards and sections that still have one.
@@ -720,6 +738,9 @@ function applySearch() {
   tab.querySelectorAll('.cluster').forEach(cluster => {
     cluster.classList.toggle('dim', query !== '' && !cluster.dataset.search.includes(query));
   });
+  const matches = [...tab.querySelectorAll('li[data-search], tr[data-search], .cluster')]
+    .some(el => !el.hidden && !el.classList.contains('dim'));
+  document.getElementById('no-results').hidden = query === '' || matches;
 }
 searchBox.addEventListener('input', applySearch);
 
