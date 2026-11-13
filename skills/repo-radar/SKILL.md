@@ -122,6 +122,20 @@ Write the person's repos into `watchlist.yaml`, then tell them:
 
 To add or remove a repo later, edit `watchlist.yaml`; nothing else changes.
 
+## Update a repo's copy of the scripts
+
+`init` copies the scripts into the repo, so a repo keeps running the version it got
+until someone updates it. When the person asks to update repo-radar in a repo, or
+this skill's scripts are newer than the repo's, run from the repo's top folder:
+
+```bash
+python scripts/dashboard.py update        # this skill's copy, not .github/dashboard/'s
+```
+
+It replaces only the scripts in `.github/dashboard/` and says which changed. The
+Action, the watch list, and the plan stay as the person left them. Then tell them to
+commit `.github/dashboard/`.
+
 ## Look at it now
 
 ```bash

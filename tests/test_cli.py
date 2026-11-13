@@ -129,3 +129,38 @@ def test_the_demo_data_file_is_current() -> None:
     import make_demo_data
 
     assert json.loads((DEMO / "data.json").read_text(encoding="utf-8")) == make_demo_data.demo()
+
+
+def test_update_refreshes_only_the_scripts(tmp_path: Path) -> None:
+    dashboard.init_watch(tmp_path, "0 6 * * *", force=False)
+    installed = tmp_path / ".github/dashboard"
+    (installed / "dashboard_page.py").write_text("# an old version\n", encoding="utf-8")
+    (installed / "dashboard_watch.py").unlink()  # as if installed before watch lists existed
+    (tmp_path / "watchlist.yaml").write_text("repos: [me/mine]\n", encoding="utf-8")
+    workflow = (tmp_path / ".github/workflows/radar.yml").read_text(encoding="utf-8")
+
+    result = dashboard.update(tmp_path)
+
+    assert result["updated"] == ["dashboard_page.py"]
+    assert result["added"] == ["dashboard_watch.py"]
+    assert len(result["unchanged"]) == len(dashboard.SCRIPTS) - 2
+    assert (installed / "dashboard_page.py").read_bytes() == (SCRIPTS / "dashboard_page.py").read_bytes()
+    assert (tmp_path / "watchlist.yaml").read_text(encoding="utf-8") == "repos: [me/mine]\n"
+    assert (tmp_path / ".github/workflows/radar.yml").read_text(encoding="utf-8") == workflow
+
+
+def test_update_refuses_a_repo_that_never_ran_init(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="run init first"):
+        dashboard.update(tmp_path)
+
+
+def test_update_from_the_installed_copy_says_what_to_do_instead(tmp_path: Path) -> None:
+    dashboard.init(tmp_path, None, with_plan=False, cron="0 11 * * *", force=False)
+    installed = tmp_path / ".github/dashboard/dashboard.py"
+    result = subprocess.run(
+        [sys.executable, str(installed), "update", "--repo-dir", str(tmp_path)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert "run update from the skill's own scripts folder" in result.stderr

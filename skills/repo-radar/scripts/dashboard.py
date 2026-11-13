@@ -8,6 +8,7 @@
     python dashboard.py init                              # add the dashboard to the repo in this folder
     python dashboard.py watch --out site/                 # one page per repo in watchlist.yaml, plus an overview
     python dashboard.py init --watch                      # make this repo watch other repos every day
+    python dashboard.py update                            # refresh the scripts init installed, nothing else
 
 Needs Python 3.10+, PyYAML, and the GitHub CLI (gh), signed in. Run it inside the
 repo, or pass --repo owner/name. The plan file is optional; by default it is
@@ -179,6 +180,48 @@ def _install(repo_dir: Path, texts: dict[Path, str], force: bool) -> list[Path]:
     return [*targets, *texts]
 
 
+def update(repo_dir: Path) -> dict[str, list[str]]:
+    """Refresh the scripts a repo got from init, with this copy's.
+
+    Only the scripts in .github/dashboard/ change. The Action, the watch list, and the
+    plan stay as they are, since the person may have edited them. A script this copy
+    has and the repo does not (added in a newer version) is added.
+
+    Returns:
+        Script names, under "updated", "added", and "unchanged".
+
+    Raises:
+        FileNotFoundError: if the repo has not run init.
+        ValueError: if this is the repo's own installed copy, which cannot update itself.
+    """
+    target = repo_dir / INSTALL_DIR
+    if not (target / "dashboard.py").exists():
+        raise FileNotFoundError(f"{target} has no dashboard.py; run init first")
+    if target.resolve() == HERE:
+        raise ValueError("this is the installed copy; run update from the skill's own scripts folder")
+    result: dict[str, list[str]] = {"updated": [], "added": [], "unchanged": []}
+    for name in SCRIPTS:
+        new, old = HERE / name, target / name
+        if not old.exists():
+            result["added"].append(name)
+        elif old.read_bytes() != new.read_bytes():
+            result["updated"].append(name)
+        else:
+            result["unchanged"].append(name)
+            continue
+        shutil.copyfile(new, old)
+    return result
+
+
+def cmd_update(args: argparse.Namespace) -> None:
+    result = update(args.repo_dir)
+    for kind in ("updated", "added", "unchanged"):
+        if result[kind]:
+            logger.info(f"{kind}: {', '.join(result[kind])}")
+    if result["updated"] or result["added"]:
+        logger.info(f"commit {args.repo_dir / INSTALL_DIR} to use them in the daily Action")
+
+
 def cmd_init(args: argparse.Namespace) -> None:
     if args.watch:
         written = init_watch(args.repo_dir, args.cron, args.force)
@@ -267,6 +310,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--cron", default="0 11 * * *", help="when to rebuild, in UTC (default: 11:00 daily)")
     p.add_argument("--force", action="store_true", help="replace files that already exist")
     p.set_defaults(func=cmd_init)
+
+    p = sub.add_parser("update", help="refresh the scripts init put in a repo, nothing else")
+    p.add_argument("--repo-dir", type=Path, default=Path("."), help="the repo's top folder")
+    p.set_defaults(func=cmd_update)
     return parser.parse_args(argv)
 
 
@@ -274,7 +321,14 @@ def main(argv: list[str] | None = None) -> None:
     args = _parse_args(argv)
     try:
         args.func(args)
-    except (plans.PlanError, watching.WatchListError, FileExistsError, RuntimeError) as error:
+    except (
+        plans.PlanError,
+        watching.WatchListError,
+        FileExistsError,
+        FileNotFoundError,
+        RuntimeError,
+        ValueError,
+    ) as error:
         logger.error(str(error))
         sys.exit(1)
 
