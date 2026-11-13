@@ -1,0 +1,54 @@
+# Rebuilds a page for every repo in watchlist.yaml, plus an overview, every day, and keeps
+# them on the `dashboard` branch. Written by repo-radar's `init --watch`. The scripts it
+# runs are in .github/dashboard/. Nothing is added to the watched repos.
+#
+# To look at today's pages:
+#   mkdir -p radar && git fetch origin dashboard && git archive origin/dashboard | tar -x -C radar
+# then open radar/index.html in a browser.
+#
+# Reading private repos: the token an Action gets can only read this repo and public
+# repos. To watch private repos, create a GitHub token that can read them and save it
+# as a secret named RADAR_TOKEN (Settings → Secrets and variables → Actions).
+
+name: Radar
+
+on:
+  schedule:
+    - cron: "__CRON__"  # in UTC
+  workflow_dispatch:  # adds a "Run workflow" button on the Actions tab
+
+permissions:
+  contents: write  # to push the dashboard branch
+  pull-requests: read  # the rest only matter if this repo watches itself
+  issues: read
+  checks: read
+  statuses: read
+
+concurrency: radar
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install pyyaml==6.0.2
+
+      - name: Build a page for each watched repo
+        env:
+          GH_TOKEN: ${{ secrets.RADAR_TOKEN || github.token }}
+        run: python .github/dashboard/dashboard.py watch --list watchlist.yaml --out "$RUNNER_TEMP/site"
+
+      - name: Save them on the dashboard branch, replacing yesterday's
+        run: |
+          git switch --orphan dashboard
+          cp "$RUNNER_TEMP"/site/*.html .
+          git add -- *.html
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit --quiet -m "Radar for $(date -u +%F)"
+          git push --force origin dashboard

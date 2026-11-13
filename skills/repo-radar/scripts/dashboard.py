@@ -6,6 +6,8 @@
     python dashboard.py build --data data.json --out dashboard.html   # draw from a saved file
     python dashboard.py me --owner "Ana Lee"              # one person's plan items vs their PRs
     python dashboard.py init                              # add the dashboard to the repo in this folder
+    python dashboard.py watch --out site/                 # one page per repo in watchlist.yaml, plus an overview
+    python dashboard.py init --watch                      # make this repo watch other repos every day
 
 Needs Python 3.10+, PyYAML, and the GitHub CLI (gh), signed in. Run it inside the
 repo, or pass --repo owner/name. The plan file is optional; by default it is
@@ -24,6 +26,7 @@ from typing import Any
 import dashboard_github as github
 import dashboard_page as page
 import dashboard_plan as plans
+import dashboard_watch as watching
 
 logging.basicConfig(
     level=logging.INFO,  # Set the log level to INFO
@@ -34,10 +37,19 @@ logger = logging.getLogger(__name__)
 
 HERE = Path(__file__).resolve().parent
 TEMPLATES = HERE.parent / "templates"
-SCRIPTS = ["dashboard.py", "dashboard_github.py", "dashboard_graph.py", "dashboard_page.py", "dashboard_plan.py"]
+SCRIPTS = [
+    "dashboard.py",
+    "dashboard_github.py",
+    "dashboard_graph.py",
+    "dashboard_page.py",
+    "dashboard_plan.py",
+    "dashboard_watch.py",
+]
 DEFAULT_PLAN = Path("docs/plan.yaml")
 INSTALL_DIR = Path(".github/dashboard")
 WORKFLOW = Path(".github/workflows/dashboard.yml")
+WATCH_WORKFLOW = Path(".github/workflows/radar.yml")
+WATCH_LIST = Path("watchlist.yaml")
 
 
 def read_plan(path: Path | None, ref: str | None = None) -> dict[str, Any] | None:
@@ -130,13 +142,31 @@ def init(repo_dir: Path, plan: Path | None, with_plan: bool, cron: str, force: b
         FileExistsError: if a file exists and force is False. Nothing is written then.
     """
     plan_path = plan or DEFAULT_PLAN
-    targets = {repo_dir / INSTALL_DIR / name: HERE / name for name in SCRIPTS}
     workflow = (TEMPLATES / "dashboard.yml").read_text(encoding="utf-8")
     plan_args = f" --plan {plan_path.as_posix()}" if plan else ""
     workflow = workflow.replace("__CRON__", cron).replace("__PLAN_ARGS__", plan_args)
     texts = {repo_dir / WORKFLOW: workflow}
     if with_plan:
         texts[repo_dir / plan_path] = (TEMPLATES / "plan.yaml").read_text(encoding="utf-8")
+    return _install(repo_dir, texts, force)
+
+
+def init_watch(repo_dir: Path, cron: str, force: bool) -> list[Path]:
+    """Set up a repo that watches other repos: the scripts, a starter watch list, and its Action.
+
+    Nothing is added to the watched repos. Raises FileExistsError like init.
+    """
+    workflow = (TEMPLATES / "radar.yml").read_text(encoding="utf-8").replace("__CRON__", cron)
+    texts = {
+        repo_dir / WATCH_WORKFLOW: workflow,
+        repo_dir / WATCH_LIST: (TEMPLATES / "watchlist.yaml").read_text(encoding="utf-8"),
+    }
+    return _install(repo_dir, texts, force)
+
+
+def _install(repo_dir: Path, texts: dict[Path, str], force: bool) -> list[Path]:
+    """Copy the scripts into the repo and write the given files; refuse to replace any first."""
+    targets = {repo_dir / INSTALL_DIR / name: HERE / name for name in SCRIPTS}
     existing = [p for p in [*targets, *texts] if p.exists()]
     if existing and not force:
         raise FileExistsError(f"already there (pass --force to replace): {[str(p) for p in existing]}")
@@ -150,9 +180,48 @@ def init(repo_dir: Path, plan: Path | None, with_plan: bool, cron: str, force: b
 
 
 def cmd_init(args: argparse.Namespace) -> None:
-    written = init(args.repo_dir, args.plan, args.with_plan, args.cron, args.force)
+    if args.watch:
+        written = init_watch(args.repo_dir, args.cron, args.force)
+    else:
+        written = init(args.repo_dir, args.plan, args.with_plan, args.cron, args.force)
     for path in written:
         logger.info(f"wrote {path}")
+
+
+def cmd_watch(args: argparse.Namespace) -> None:
+    """Build one page per repo on the watch list, and an overview page linking them."""
+    entries = watching.load_watch_list(args.list.read_text(encoding="utf-8"), str(args.list))
+    if args.data_dir:  # saved data, for tests and offline use: owner__name.json (+ .plan.yaml)
+
+        def get_plan(repo: str, _: str) -> str | None:
+            path = args.data_dir / watching.page_name(repo).replace(".html", ".plan.yaml")
+            return path.read_text(encoding="utf-8") if path.exists() else None
+
+        def get_data(repo: str, _: set[int]) -> dict[str, Any]:
+            path = args.data_dir / watching.page_name(repo).replace(".html", ".json")
+            if not path.exists():
+                raise RuntimeError(f"no saved data at {path}")
+            return json.loads(path.read_text(encoding="utf-8"))
+
+    else:
+        get_plan = github.read_file
+
+        def get_data(repo: str, extra: set[int]) -> dict[str, Any]:
+            return github.fetch(repo, args.days, args.limit, extra)
+
+    pages, rows = watching.watch(
+        entries, get_plan, get_data, lambda data, plan: page.render(data, plan, back="index.html")
+    )
+    args.out.mkdir(parents=True, exist_ok=True)
+    for name, html in pages.items():
+        (args.out / name).write_text(html, encoding="utf-8")
+    fetched = [r["fetched_at"] for r in rows if not r.get("error")]
+    built_at = max(fetched) if fetched else watching.now_stamp()
+    (args.out / "index.html").write_text(page.render_index(rows, built_at), encoding="utf-8")
+    failed = [r["repo"] for r in rows if r.get("error")]
+    logger.info(f"wrote {len(pages)} repo pages and index.html to {args.out}")
+    if failed:
+        logger.warning(f"could not read: {', '.join(failed)} (the overview says why)")
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -182,8 +251,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--ref", help="read the plan at this git ref, e.g. origin/main")
     p.set_defaults(func=cmd_me)
 
+    p = sub.add_parser("watch", help="one page per repo on a watch list, and an overview")
+    p.add_argument("--list", type=Path, default=WATCH_LIST, help=f"the watch list (default: {WATCH_LIST})")
+    p.add_argument("--out", type=Path, required=True, help="the folder to write the pages to")
+    p.add_argument("--data-dir", type=Path, help="read saved data (owner__name.json) instead of GitHub")
+    p.add_argument("--days", type=int, default=90, help="how far back the Done tab goes")
+    p.add_argument("--limit", type=int, default=500, help="most PRs or issues to fetch per list")
+    p.set_defaults(func=cmd_watch)
+
     p = sub.add_parser("init", help="add the dashboard to a repo")
     p.add_argument("--repo-dir", type=Path, default=Path("."), help="the repo's top folder")
+    p.add_argument("--watch", action="store_true", help="set this repo up to watch other repos instead")
     p.add_argument("--plan", type=Path, help=f"where the plan lives (default: {DEFAULT_PLAN})")
     p.add_argument("--with-plan", action="store_true", help="also write a starter plan")
     p.add_argument("--cron", default="0 11 * * *", help="when to rebuild, in UTC (default: 11:00 daily)")
@@ -196,7 +274,7 @@ def main(argv: list[str] | None = None) -> None:
     args = _parse_args(argv)
     try:
         args.func(args)
-    except (plans.PlanError, FileExistsError, RuntimeError) as error:
+    except (plans.PlanError, watching.WatchListError, FileExistsError, RuntimeError) as error:
         logger.error(str(error))
         sys.exit(1)
 

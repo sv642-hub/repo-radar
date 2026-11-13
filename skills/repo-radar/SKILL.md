@@ -1,6 +1,6 @@
 ---
 name: repo-radar
-description: repo-radar. Build a one-page HTML dashboard of a GitHub repo (open pull requests sorted by what they need, open issues by whether anyone is on them, a graph of how PRs, issues and plan boxes link, and recently closed work by release), set it up to rebuild every day with a GitHub Action, and compare a team's plan file with GitHub. Use when someone wants a status dashboard or morning view of a repo, asks "where are we", "where am I", "what is left in my section", "what needs review", "is my PR on the plan", wants their PR put on the plan, or runs the weekly plan refresh.
+description: repo-radar. Build a one-page HTML dashboard of a GitHub repo (open pull requests sorted by what they need, open issues by whether anyone is on them, a graph of how PRs, issues and plan boxes link, and recently closed work by release), set it up to rebuild every day with a GitHub Action, watch several repos at once from a watch list with an overview page, and compare a team's plan file with GitHub. Use when someone wants a status dashboard or morning view of a repo or of several repos, asks "where are we", "where am I", "how are my teams' repos doing", "what is left in my section", "what needs review", "is my PR on the plan", wants their PR put on the plan, or runs the weekly plan refresh.
 ---
 
 # repo-radar
@@ -18,6 +18,13 @@ Its tabs:
 | Issues | Open issues: nobody on it yet, someone assigned, a PR is open. |
 | Graph | How open work links: plan box → issue → PR, sub-issues, "blocked by", PRs built on other PRs' branches. |
 | Done | PRs and issues closed in the last 90 days, under the release that shipped them. |
+
+There are two ways to set it up. Ask which one the person wants if it is not clear:
+
+| Way | For | What it adds, where |
+|---|---|---|
+| **In one repo** (`init`) | Someone working on that repo | A daily Action in that repo, building that repo's page |
+| **Watch list** (`init --watch`) | Someone keeping an eye on several repos, like a manager or a teacher | A daily Action in one repo of their own, building a page per watched repo plus an overview. Nothing is added to the watched repos |
 
 `SCRIPT` below means `scripts/dashboard.py` in this skill's folder, or
 `.github/dashboard/dashboard.py` in a repo that has run `init`.
@@ -78,6 +85,42 @@ and refuses to replace files that exist. Then:
 If the Action fails with "Permission denied" on push, the repo or organization
 limits what Actions may do: Settings → Actions → General → Workflow permissions,
 "Read and write". The person, not you, changes that setting.
+
+## Set up a watch list (several repos)
+
+Ask, in one go: which repos to watch (as owner/name), whether any keeps its plan
+somewhere other than `docs/plan.yaml`, which repo of theirs should hold the watch
+list (a new empty repo is fine), and what time to rebuild (UTC).
+
+Before writing anything, build the pages once so the person sees them:
+
+```bash
+python SCRIPT watch --list <scratch dir>/watchlist.yaml --out <scratch dir>/radar
+```
+
+Open `index.html` in that folder. A repo that cannot be read shows its error on its
+row instead of stopping the others: usually a typo in the name, or a private repo.
+
+Then, in the repo that will hold the list:
+
+```bash
+python SCRIPT init --watch            # scripts, watchlist.yaml, and .github/workflows/radar.yml
+```
+
+Write the person's repos into `watchlist.yaml`, then tell them:
+
+1. What to commit (the files `init --watch` wrote), and that once it reaches the
+   default branch they can run it at once from the Actions tab ("Radar", then "Run workflow").
+2. **Private repos need a token.** The Action can read public repos and its own repo,
+   nothing else. To watch private repos, the person creates a GitHub token that can
+   read them, and saves it as a secret named `RADAR_TOKEN` in the watching repo
+   (Settings → Secrets and variables → Actions). They do this themselves; never ask
+   for the token or paste it anywhere.
+3. How to look at it each morning:
+   `mkdir -p radar && git fetch origin dashboard && git archive origin/dashboard | tar -x -C radar`,
+   then open `radar/index.html`.
+
+To add or remove a repo later, edit `watchlist.yaml`; nothing else changes.
 
 ## Look at it now
 

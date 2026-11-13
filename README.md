@@ -49,35 +49,76 @@ You need Python 3.10 or newer, PyYAML (`pip install pyyaml`), and the
 /plugin install repo-radar --marketplace sv642-hub/repo-radar
 ```
 
-Then, in your project, ask Claude to "set up repo-radar". It asks a couple of
-questions, builds the page once so you can see it, and adds the daily rebuild.
+Then ask Claude to "set up repo-radar". It asks which of the two ways below you want,
+builds the pages once so you can see them, and adds the daily rebuild.
 
-**Without Claude**, run the script inside any repo:
+**Without Claude**, run the script inside any repo, or name one:
 
 ```bash
 python skills/repo-radar/scripts/dashboard.py build --out dashboard.html
+python skills/repo-radar/scripts/dashboard.py build --repo owner/name --out dashboard.html
 ```
 
-## Rebuild it every morning
+Either way, the daily rebuild is a GitHub Action with no AI in it, so it needs no API
+key. The pages live on a branch called `dashboard`, replaced each day.
+
+## For the people working on a repo
+
+Add repo-radar to the repo itself. From its top folder:
 
 ```bash
 python <path to>/skills/repo-radar/scripts/dashboard.py init
 ```
 
-This adds the scripts to `.github/dashboard/` and a GitHub Action to
+This adds the scripts to `.github/dashboard/` and an Action to
 `.github/workflows/dashboard.yml`. Add `--with-plan` for a starter plan, or
-`--plan path/to/plan.yaml` to use one you have. Commit them, and the Action rebuilds
-the page every day at 11:00 UTC (change it with `--cron`). Nothing in it calls an AI,
-so it needs no API key.
-
-The page lives on a branch called `dashboard`, replaced each day. To open it:
+`--plan path/to/plan.yaml` to use one you have. Commit them, and the page rebuilds
+every day at 11:00 UTC (change it with `--cron`). To open today's page:
 
 ```bash
 git fetch origin dashboard && git show origin/dashboard:index.html > dashboard.html
 ```
 
-For a public repo, you can turn on GitHub Pages for that branch instead and get a web
-address.
+For a public repo, you can turn on GitHub Pages for the `dashboard` branch instead and
+get a web address.
+
+## For someone watching several repos
+
+A manager, a teacher, or anyone following more than one team. Nothing is added to the
+repos you watch: you list them in one repo of your own.
+
+![The overview of three made-up repos](docs/screenshot-overview.png)
+
+In that repo (a new, empty one is fine):
+
+```bash
+python <path to>/skills/repo-radar/scripts/dashboard.py init --watch
+```
+
+This writes `watchlist.yaml` and an Action, `.github/workflows/radar.yml`. List your
+repos:
+
+```yaml
+repos:
+  - my-org/api
+  - repo: my-org/mobile-app
+    plan: docs/architecture.yaml   # if its plan is not at docs/plan.yaml
+```
+
+Commit, and every day the Action builds a page for each repo plus an overview
+comparing them: open PRs, what is ready to merge, failing checks, issues nobody is on,
+how much of each plan is built, and when each repo last moved. A repo it cannot read
+shows the reason on its row instead of stopping the rest. To open today's pages:
+
+```bash
+mkdir -p radar && git fetch origin dashboard && git archive origin/dashboard | tar -x -C radar
+```
+
+then open `radar/index.html`.
+
+**Private repos:** the Action can read public repos and its own repo. To watch private
+ones, create a GitHub token that can read them and save it in your watching repo as a
+secret named `RADAR_TOKEN` (Settings → Secrets and variables → Actions).
 
 ## The plan file
 
@@ -125,6 +166,8 @@ Only facts GitHub already has, no AI:
 | `dashboard.py build --out page.html` | Ask GitHub, then draw the page |
 | `dashboard.py me` | One person's plan items, checked against their PRs |
 | `dashboard.py init` | Add the scripts and the daily Action to a repo |
+| `dashboard.py watch --out folder/` | A page per repo in `watchlist.yaml`, plus an overview |
+| `dashboard.py init --watch` | Make a repo of yours watch other repos every day |
 | `dashboard.py fetch --out data.json` | Save what GitHub said, to draw later with `build --data` |
 
 Each takes `--help`. To run the tests: `uv run pytest`.

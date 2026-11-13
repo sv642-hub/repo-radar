@@ -1,0 +1,12 @@
+# The repos this radar watches. Each one gets its own page, and index.html compares them.
+#
+# Write each repo as owner/name. If a repo keeps its plan somewhere other than
+# docs/plan.yaml, give the path:
+#
+#   - repo: my-org/api
+#     plan: docs/img/architecture.yaml
+#
+# Private repos need a RADAR_TOKEN secret; see .github/workflows/radar.yml.
+
+repos:
+  - your-github-name/your-repo

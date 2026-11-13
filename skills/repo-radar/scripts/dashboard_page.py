@@ -88,6 +88,12 @@ def _card(rows: list[str], cls: str = "", head: str = "", search: str = "", wide
     )
 
 
+def _ago(stamp: str, now: str) -> str:
+    """ "today", or "3 days ago"."""
+    age = github.age(stamp, now)
+    return age if age == "today" else f"{age} ago"
+
+
 def _labels(thing: dict[str, Any]) -> str:
     return "".join(_chip(label["name"], "label") for label in thing.get("labels") or [])
 
@@ -209,7 +215,7 @@ def _pr_row(pr: dict[str, Any], data: dict[str, Any], on_plan: dict[int, str] | 
         f'<li class="item" data-search="{_search(pr["number"], pr["title"], login, pr.get("headRefName"))}">'
         f'<span class="icon dot"></span><div>{_pill(pr)} {_a(pr["url"], pr["title"], "title-link")} '
         f'{"".join(chips)}{_labels(pr)}<div class="people">by {_person(login)} · opened '
-        f'{_e(github.age(pr["createdAt"], data["fetched_at"]))} ago</div></div></li>'
+        f'{_e(_ago(pr["createdAt"], data["fetched_at"]))}</div></div></li>'
     )
 
 
@@ -258,7 +264,7 @@ def _issue_row(issue: dict[str, Any], data: dict[str, Any], prs_for_issue: dict,
         f'<span class="icon ring"></span><div>{_pill(issue)} '
         f'{_a(issue["url"], issue["title"], "title-link")} {"".join(chips)}{_labels(issue)}'
         f'<div class="people">by {_person(login)}{f" · assigned {assigned}" if assigned else ""}'
-        f' · opened {_e(github.age(issue["createdAt"], data["fetched_at"]))} ago</div></div></li>'
+        f' · opened {_e(_ago(issue["createdAt"], data["fetched_at"]))}</div></div></li>'
     )
 
 
@@ -433,8 +439,27 @@ def _done_tab(data: dict[str, Any]) -> str:
 # ---------------------------------------------------------------- The page
 
 
-def render(data: dict[str, Any], plan: dict[str, Any] | None) -> str:
-    """The whole page for one repo, as an HTML string."""
+def _page(title: str, header: str, main: str) -> str:
+    """The parts every page shares: head, styles, search, theme button, and script."""
+    return (
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        f"<title>{_e(title)}</title><style>{CSS}</style>{THEME_SCRIPT}</head><body>"
+        f"<header>{header}"
+        '<input id="search" type="search" placeholder="Search titles, people, labels…" aria-label="Search">'
+        '<button id="theme" type="button">Dark mode</button></header>'
+        f"<main>{main}</main>"
+        '<footer class="note">Made by repo-radar. The page is rebuilt from GitHub; '
+        "do not edit it by hand.</footer>"
+        f"<script>{PAGE_SCRIPT}</script></body></html>\n"
+    )
+
+
+def render(data: dict[str, Any], plan: dict[str, Any] | None, back: str | None = None) -> str:
+    """The whole page for one repo, as an HTML string.
+
+    back: the overview page's file name, when this page is one of several being watched.
+    """
     tabs = []
     if plan:
         tabs.append(("plan", "Plan", _plan_tab(plan, data)))
@@ -453,20 +478,81 @@ def render(data: dict[str, Any], plan: dict[str, Any] | None) -> str:
         for i, (key, _, body) in enumerate(tabs)
     )
     built = data["fetched_at"].replace("T", " ").removesuffix("Z")
-    return (
-        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
-        '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        f"<title>{_e(data['repo'])} dashboard</title><style>{CSS}</style>{THEME_SCRIPT}</head><body>"
-        f'<header><h1>{_a(data["url"], data["repo"], "title-link")}</h1>'
+    header = (
+        (f'<a class="back" href="{_e(back)}">← All repos</a>' if back else "")
+        + f'<h1>{_a(data["url"], data["repo"], "title-link")}</h1>'
         f'<span class="note">from GitHub, {_e(built)} UTC</span>'
         f'<nav class="tabs">{buttons}</nav>'
-        '<input id="search" type="search" placeholder="Search titles, people, labels…" aria-label="Search">'
-        '<button id="theme" type="button">Dark mode</button></header>'
-        f"<main>{panels}</main>"
-        '<footer class="note">Made by repo-radar. The page is rebuilt from GitHub; '
-        "do not edit it by hand.</footer>"
-        f"<script>{PAGE_SCRIPT}</script></body></html>\n"
     )
+    return _page(f"{data['repo']} dashboard", header, panels)
+
+
+# ---------------------------------------------------------------- The overview (watch list)
+
+
+def _count(n: Any, cls: str = "") -> str:
+    """A number in the overview table, coloured only when it is not zero."""
+    return f'<td class="num">{_chip(n, cls) if n and cls else _e(n)}</td>'
+
+
+def render_index(rows: list[dict[str, Any]], built_at: str) -> str:
+    """The overview page for a watch list: one row per repo, linking to its page."""
+    good = [r for r in rows if not r.get("error")]
+    total = lambda key: sum(r[key] for r in good)  # noqa: E731
+    tiles = _tiles(
+        [
+            (len(rows), "repos watched"),
+            (total("open_prs"), "open pull requests"),
+            (total("ready"), "ready to merge"),
+            (total("failing"), "with checks failing"),
+            (total("nobody"), "open issues nobody is on"),
+        ]
+    )
+    head = (
+        "<tr><th>Repo</th><th>Open PRs</th><th>Ready to merge</th><th>Needs review</th>"
+        "<th>Checks failing</th><th>Open issues</th><th>Nobody on it</th><th>Plan built</th>"
+        "<th>Plan to update</th><th>Last activity</th></tr>"
+    )
+    body = []
+    for r in rows:
+        name = f'<td class="repo">{_a(r["url"], r["repo"], "title-link")}'
+        if r.get("error"):
+            body.append(
+                f'<tr data-search="{_search(r["repo"])}">{name}</td>'
+                f'<td colspan="9" class="error">Could not read it: {_e(r["error"])}</td></tr>'
+            )
+            continue
+        name += f'<br><a href="{_e(r["page"])}">open its page →</a></td>'
+        plan = r["plan"]
+        plan_cells = (
+            f'<td class="num">{plan["built"]} of {plan["items"]}</td>' + _count(plan["to_update"], "warn")
+            if plan
+            else '<td class="num note">no plan</td><td class="num note">—</td>'
+        )
+        newest = _ago(r["newest"], built_at) if r["newest"] else "none"
+        body.append(
+            f'<tr data-search="{_search(r["repo"])}">{name}'
+            + _count(r["open_prs"])
+            + _count(r["ready"], "green")
+            + _count(r["review"])
+            + _count(r["failing"], "red")
+            + _count(r["open_issues"])
+            + _count(r["nobody"])
+            + plan_cells
+            + f'<td class="num">{_e(newest)}</td></tr>'
+        )
+    main = (
+        '<section class="tab active" id="overview">'
+        + tiles
+        + '<p class="explain">Each repo has its own page with its pull requests, issues, graph, '
+        "and plan. A yellow number under Plan to update counts items whose pull request has "
+        "merged or closed, so the plan needs its weekly refresh.</p>"
+        + f'<div class="table-wrap"><table class="overview"><thead>{head}</thead>'
+        + f'<tbody>{"".join(body)}</tbody></table></div></section>'
+    )
+    built = built_at.replace("T", " ").removesuffix("Z")
+    header = f'<h1>repo-radar</h1><span class="note">{len(rows)} repos, from GitHub, {_e(built)} UTC</span>'
+    return _page("repo-radar overview", header, main)
 
 
 CSS = """
@@ -578,6 +664,17 @@ line.edge{marker-end:none;stroke-width:2}
 .edge.sub{stroke:var(--purple)}
 .edge.blocks{stroke:var(--red-line);stroke-dasharray:5 4}
 .edge.stacked{stroke:var(--orange-line)}
+.back{font-size:14px;text-decoration:none}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card-bg)}
+.overview{border-collapse:collapse;width:100%;font-size:14px}
+.overview th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:10px 12px;
+border-bottom:1px solid var(--line);white-space:nowrap}
+.overview td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.overview tr:last-child td{border-bottom:none}
+.overview .num{text-align:center;white-space:nowrap}
+.overview .repo{font-weight:600}.overview .repo a:not(.title-link){font-weight:400;font-size:12px}
+.overview .error{color:var(--unowned)}
+.chip.green{border-color:var(--green-line);color:var(--done)}
 @media (max-width:640px){header,main{padding-left:16px;padding-right:16px}.sub{display:block;margin:2px 0 0}}
 @media print{.tabs,#search,#theme{display:none}.tab{display:block!important}.tab+.tab{break-before:page}
 .card,.section{break-inside:avoid}}
@@ -616,6 +713,9 @@ function applySearch() {
     const anyCard = [...section.querySelectorAll('.card')].some(card => !card.hidden);
     section.hidden = !anyCard;
     if (query !== '' && anyCard) section.open = true;
+  });
+  tab.querySelectorAll('tr[data-search]').forEach(row => {
+    row.hidden = query !== '' && !row.dataset.search.includes(query);
   });
   tab.querySelectorAll('.cluster').forEach(cluster => {
     cluster.classList.toggle('dim', query !== '' && !cluster.dataset.search.includes(query));

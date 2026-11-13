@@ -11,6 +11,7 @@ import logging
 import subprocess
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,21 @@ def _gh(args: list[str]) -> Any:
     if result.returncode != 0:
         raise RuntimeError(f"gh {' '.join(args[:3])} failed: {result.stderr.strip()}")
     return json.loads(result.stdout)
+
+
+def read_file(repo: str, path: str) -> str | None:
+    """A file's text from a repo's default branch on GitHub, or None if there is no such file."""
+    result = subprocess.run(
+        ["gh", "api", f"repos/{repo}/contents/{quote(path)}", "-H", "Accept: application/vnd.github.raw+json"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        return result.stdout
+    if "404" in result.stderr or "Not Found" in result.stderr:
+        return None
+    raise RuntimeError(f"reading {path} from {repo} failed: {result.stderr.strip()}")
 
 
 def _listed(kind: str, state: str, fields: str, limit: int, repo: list[str], search: str = "") -> list:
