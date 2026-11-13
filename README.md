@@ -52,7 +52,19 @@ You need Python 3.10 or newer, PyYAML (`pip install pyyaml`), and the
 Then ask Claude to "set up repo-radar". It asks which of the two ways below you want,
 builds the pages once so you can see them, and adds the daily rebuild.
 
-**Without Claude**, run the script inside any repo, or name one:
+**With Codex**, copy the skill folder to where Codex looks for skills. For one repo,
+put it in that repo:
+
+```bash
+git clone https://github.com/sv642-hub/repo-radar.git /tmp/repo-radar
+mkdir -p .agents/skills && cp -R /tmp/repo-radar/skills/repo-radar .agents/skills/
+```
+
+Or, to have it in every repo, copy it to `~/.agents/skills/` instead. Restart Codex,
+then ask it to "set up repo-radar". (Codex reads skills from `.agents/skills`; older
+guides say `.codex/skills`.)
+
+**Without an AI assistant**, run the script inside any repo, or name one:
 
 ```bash
 python skills/repo-radar/scripts/dashboard.py build --out dashboard.html

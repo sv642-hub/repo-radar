@@ -50,7 +50,8 @@ The default place is `docs/plan.yaml`; pass `--plan` for another path.
 4. **Never invent a status.** An item is `pr` only when an open pull request does that
    work. When you cannot tell which box a pull request belongs to, ask.
 5. **Never commit the HTML page to the main branch.** The daily Action keeps it on its
-   own `dashboard` branch. A page you build by hand goes in a scratch folder.
+   own `dashboard` branch. A page you build by hand goes in a temporary folder outside
+   the repo (`<scratch dir>` below).
 
 ## Set it up in a repo
 
@@ -142,8 +143,8 @@ commit `.github/dashboard/`.
 python SCRIPT build --out <scratch dir>/dashboard.html
 ```
 
-Run it inside the repo (or pass `--repo owner/name`). Write the page to your
-scratchpad or another folder outside git, then show it to the person. Explain what
+Run it inside the repo (or pass `--repo owner/name`). Write the page to a temporary
+folder outside the repo, so it never gets committed, then show it to the person. Explain what
 it says in plain words, starting with the "Start here" card and any yellow tags on
 the Plan tab. Every count carries its grain: "12 of 16 open pull requests need
 review", not "12 need review".
