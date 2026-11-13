@@ -1,6 +1,7 @@
 """Regression coverage for live contracts, generated commands, and graph identity."""
 import copy
 import json
+import re
 import shlex
 import subprocess
 import sys
@@ -108,3 +109,17 @@ def test_html_has_accessible_tabs_and_visible_fetch_warning(demo_data):
 )
 def test_unavailable_note_counts_repos_with_correct_plurals(missing, readable, expected):
     assert page._unavailable_note(missing, readable) == expected
+
+
+def test_graph_node_links_are_exposed_to_screen_readers(demo_plan, demo_data):
+    html = page.render(demo_data, demo_plan)
+    svg = html[html.index('<svg class="graph"') :]
+    svg = svg[: svg.index("</svg>")]
+    assert 'role="img"' not in svg.split(">", 1)[0]
+    assert 'role="group" aria-label="Graph of open work"' in svg
+    links = svg.count("<a href=")
+    labelled = svg.count('rel="noopener" aria-label="')
+    assert links > 0 and labelled == links
+    assert ", opens in a new tab" in svg
+    edges = re.findall(r'<path class="edge [^"]*"([^>]*)>', svg)
+    assert edges and all('aria-hidden="true"' in attrs for attrs in edges)

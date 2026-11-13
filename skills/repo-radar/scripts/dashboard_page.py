@@ -325,14 +325,18 @@ def _node(key: str, x: float, y: float, plan: dict[str, Any] | None, data: dict[
         url, cls = pr["url"], PR_CLASSES[group] or "plain"
     room = int((graph.NODE_W - 20) / 7)
     short = line1 if len(line1) <= room else line1[: room - 1] + "…"
+    # A link is named by aria-label (the visible text is cut short). A plan box is not a
+    # link, so it is a labelled image instead; either way screen readers get the full text.
+    label = _e(f"{line1}, {line2}" + (", opens in a new tab" if url else ""))
+    role = "" if url else f' role="img" aria-label="{label}"'
     body = (
-        f'<g class="node {cls}"><title>{_e(line1)}</title>'
+        f'<g class="node {cls}"{role}><title>{_e(line1)}</title>'
         f'<rect x="{x:.0f}" y="{y:.0f}" width="{graph.NODE_W}" height="{graph.NODE_H}" rx="8"/>'
         f'<text x="{x + 10:.0f}" y="{y + 20:.0f}" class="n1">{_e(short)}</text>'
         f'<text x="{x + 10:.0f}" y="{y + 37:.0f}" class="n2">{_e(line2)}</text></g>'
     )
     if url:
-        body = f'<a href="{_href(url)}" target="_blank" rel="noopener">{body}</a>'
+        body = f'<a href="{_href(url)}" target="_blank" rel="noopener" aria-label="{label}">{body}</a>'
     return body, f"{line1} {line2}"
 
 
@@ -361,7 +365,7 @@ def _graph_tab(plan: dict[str, Any] | None, data: dict[str, Any]) -> str:
     for keys, _, _ in placed:
         inside = set(keys)
         lines = [
-            f'<path class="edge {kind}" d="{graph.path(places[a], places[b])}"><title>{_e(EDGE_LABELS[kind])}</title></path>'
+            f'<path class="edge {kind}" aria-hidden="true" d="{graph.path(places[a], places[b])}"><title>{_e(EDGE_LABELS[kind])}</title></path>'
             for a, b, kind in links
             if a in inside
         ]
@@ -375,8 +379,8 @@ def _graph_tab(plan: dict[str, Any] | None, data: dict[str, Any]) -> str:
     lonely_issues = sum(f"issue:{i['number']}" not in linked for i in data["open_issues"])
     out.append(
         f'<div class="graph-wrap"><svg class="graph" viewBox="0 0 {w:.0f} {height + 10:.0f}" '
-        f'width="{w:.0f}" role="img" aria-label="Graph of open work">'
-        '<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
+        f'width="{w:.0f}" role="group" aria-label="Graph of open work">'
+        '<defs aria-hidden="true"><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
         'markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead"/>'
         f'</marker></defs><g transform="translate(0 5)">{"".join(parts)}</g></svg></div>'
         f'<p class="note">Left out because nothing links to them: {lonely_prs} open pull '
