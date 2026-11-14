@@ -1,7 +1,8 @@
 name: demo page
 
-# Publishes the demo dashboard (Pantry Planner, a made-up project) to GitHub Pages.
-# It reads only examples/demo/, so it needs no token and makes no GitHub API calls.
+# Publishes the demo to GitHub Pages: a manager overview of three made-up repos
+# (index.html), each linking to its own full dashboard, the engineer view.
+# It reads only examples/demo-watch/, so it needs no token and makes no GitHub API calls.
 on:
   push:
     branches: [main]
@@ -27,11 +28,10 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.13"
-      - name: Build the demo page
+      - name: Build the demo pages
         run: |
-          mkdir -p site
-          uv run python skills/repo-radar/scripts/dashboard.py build \
-            --data examples/demo/data.json --plan examples/demo/plan.yaml --out site/index.html
+          uv run python skills/repo-radar/scripts/dashboard.py watch \
+            --list examples/demo-watch/watchlist.yaml --data-dir examples/demo-watch --out site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

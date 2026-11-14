@@ -3,7 +3,7 @@
 Everything in your GitHub repo that needs a person, on one page, every morning.
 Plus, if you want it, a map of what your team has built and what is still missing.
 
-**[See the live demo](https://sv642-hub.github.io/repo-radar/)**, built from Pantry Planner, a made-up project.
+**[See the live demo](https://sv642-hub.github.io/repo-radar/)**: a manager overview of three made-up repos. Click a repo for its full dashboard.
 
 ![The Plan tab of a made-up project](docs/screenshot-plan.png)
 
@@ -32,8 +32,9 @@ Then ask Claude to "set up repo-radar". For Codex or plain Python, see [Install]
 Built by Sebastian Villalobos ([@sv642-hub](https://github.com/sv642-hub)), Verness Chin
 ([@verness](https://github.com/verness)), Ishika Gobin
 ([@ishikagobin](https://github.com/ishikagobin)), and Sharanya Atluri
-([@saiatl2354](https://github.com/saiatl2354)). Inspired by Amit Arora's
-([@aarora79](https://github.com/aarora79)) daily triage dashboard for
-[mcp-gateway-registry](https://github.com/agentic-community/mcp-gateway-registry).
+([@saiatl2354](https://github.com/saiatl2354)), from the status tracker we built for our
+own team project. Thanks to our professor, Amit Arora
+([@aarora79](https://github.com/aarora79)), who helped us improve it and suggested
+turning it into a skill any team can use.
 
 [MIT](LICENSE)

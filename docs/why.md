@@ -14,7 +14,6 @@ invisible. And a board needs someone to add and move cards, while this page rebu
 itself from GitHub. It stops there on purpose: the page only reads. No assigning, no
 sprints, no dragging cards.
 
-Thanks to our professor, Amit Arora ([@aarora79](https://github.com/aarora79)), whose
-daily triage dashboard for
-[mcp-gateway-registry](https://github.com/agentic-community/mcp-gateway-registry)
-inspired the morning page, and who suggested making this a skill any team can use.
+repo-radar grew out of the status tracker we built for our own team project. Thanks to
+our professor, Amit Arora ([@aarora79](https://github.com/aarora79)), who helped us
+improve it and suggested turning it into a skill any team can use.

@@ -1,0 +1,6 @@
+# The watch list for the live demo's manager overview. All three repos are made up;
+# their saved data sits next to this file, written by examples/make_demo_data.py.
+repos:
+  - example-org/pantry-planner
+  - example-org/recipe-api
+  - example-org/mobile-app

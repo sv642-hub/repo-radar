@@ -164,3 +164,30 @@ def test_update_from_the_installed_copy_says_what_to_do_instead(tmp_path: Path) 
     )
     assert result.returncode == 1
     assert "run update from the skill's own scripts folder" in result.stderr
+
+
+def test_the_demo_watch_files_are_current() -> None:
+    """examples/demo-watch/ feeds the live demo's manager overview; regenerate it with make_demo_data.py."""
+    sys.path.insert(0, str(DEMO.parent))
+    import make_demo_data
+
+    watch_dir = DEMO.parent / "demo-watch"
+    for name, text in make_demo_data.watch_files().items():
+        assert (watch_dir / name).read_text(encoding="utf-8") == text, name
+
+
+def test_the_demo_site_builds_from_the_saved_watch_data(tmp_path: Path) -> None:
+    """The same command the Pages workflow runs: an overview plus one page per made-up repo."""
+    watch_dir = DEMO.parent / "demo-watch"
+    result = _run(
+        tmp_path, "watch", "--list", str(watch_dir / "watchlist.yaml"),
+        "--data-dir", str(watch_dir), "--out", "site",
+    )
+    assert result.returncode == 0, result.stderr
+    assert "could not read" not in result.stderr
+    assert sorted(p.name for p in (tmp_path / "site").iterdir()) == [
+        "example-org__mobile-app.html",
+        "example-org__pantry-planner.html",
+        "example-org__recipe-api.html",
+        "index.html",
+    ]

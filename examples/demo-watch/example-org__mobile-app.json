@@ -1,0 +1,96 @@
+{
+ "repo": "example-org/mobile-app",
+ "url": "https://github.com/example-org/mobile-app",
+ "fetched_at": "2026-11-12T08:00:00Z",
+ "days": 90,
+ "open_prs": [
+  {
+   "number": 14,
+   "title": "Upgrade the app framework",
+   "state": "OPEN",
+   "author": {
+    "login": "dee-ross"
+   },
+   "url": "https://github.com/example-org/mobile-app/pull/14",
+   "isDraft": false,
+   "createdAt": "2026-09-04T10:00:00Z",
+   "updatedAt": "2026-09-04T10:00:00Z",
+   "baseRefName": "main",
+   "headRefName": "chore/upgrade",
+   "headRepository": {
+    "name": "mobile-app"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "reviewDecision": "",
+   "statusCheckRollup": [
+    {
+     "__typename": "CheckRun",
+     "name": "tests",
+     "status": "COMPLETED",
+     "conclusion": "FAILURE"
+    }
+   ],
+   "closingIssuesReferences": [],
+   "additions": 800,
+   "deletions": 640,
+   "changedFiles": 41,
+   "labels": []
+  }
+ ],
+ "closed_prs": [],
+ "open_issues": [
+  {
+   "number": 11,
+   "title": "App icon looks blurry on tablets",
+   "state": "OPEN",
+   "author": {
+    "login": "ana-lee"
+   },
+   "url": "https://github.com/example-org/mobile-app/issues/11",
+   "createdAt": "2026-09-02T10:00:00Z",
+   "updatedAt": "2026-09-02T10:00:00Z",
+   "labels": [
+    {
+     "name": "bug"
+    }
+   ],
+   "assignees": [],
+   "parent": null,
+   "blockedBy": {
+    "nodes": [],
+    "totalCount": 0
+   }
+  },
+  {
+   "number": 12,
+   "title": "Push notifications when a list is shared",
+   "state": "OPEN",
+   "author": {
+    "login": "bokim"
+   },
+   "url": "https://github.com/example-org/mobile-app/issues/12",
+   "createdAt": "2026-09-10T10:00:00Z",
+   "updatedAt": "2026-09-10T10:00:00Z",
+   "labels": [
+    {
+     "name": "feature"
+    }
+   ],
+   "assignees": [
+    {
+     "login": "dee-ross"
+    }
+   ],
+   "parent": null,
+   "blockedBy": {
+    "nodes": [],
+    "totalCount": 0
+   }
+  }
+ ],
+ "closed_issues": [],
+ "releases": [],
+ "other_prs": []
+}

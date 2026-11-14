@@ -1,4 +1,4 @@
-"""Write examples/demo/data.json: GitHub data for a made-up repo, Pantry Planner.
+"""Write the demo data: examples/demo/ (Pantry Planner) and examples/demo-watch/ (three repos).
 
 The people, pull requests, and issues are invented. The file has the same shape
 `dashboard.py fetch` saves, so the demo page and the tests need no network:
@@ -140,7 +140,83 @@ def demo() -> dict[str, Any]:
     }
 
 
+def _as_repo(data: dict[str, Any], repo: str) -> dict[str, Any]:
+    """The same kind of data, moved to another made-up repo (every link points there)."""
+    text = json.dumps(data).replace(URL, f"https://github.com/{repo}")
+    text = text.replace('"name": "pantry-planner"', f'"name": "{repo.split("/")[1]}"')
+    return {**json.loads(text), "repo": repo, "url": f"https://github.com/{repo}"}
+
+
+def recipe_api() -> dict[str, Any]:
+    """A busy repo with no plan: several PRs waiting, one ready, issues nobody has picked up."""
+    data = {
+        **demo(),
+        "open_prs": [
+            open_pr(61, "Search recipes by what is in the pantry", "cypark", "2026-11-10T09:00:00Z",
+                    "search/by-pantry", review="APPROVED", closes=[52], size=(260, 40, 8)),
+            open_pr(62, "Cache recipe lookups for an hour", "bokim", "2026-11-07T11:00:00Z",
+                    "perf/cache", review="REVIEW_REQUIRED", size=(90, 12, 3)),
+            open_pr(63, "Return nutrition facts with each recipe", "dee-ross", "2026-11-12T07:00:00Z",
+                    "api/nutrition", size=(150, 6, 5)),
+        ],
+        "open_issues": [
+            open_issue(52, "Find recipes from the ingredients I have", "ana-lee", "2026-10-28T10:00:00Z",
+                       assignees=["cypark"], labels=["feature"]),
+            open_issue(53, "Recipe images load slowly", "dee-ross", "2026-11-05T10:00:00Z", labels=["bug"]),
+            open_issue(54, "Rate limit the public endpoints", "bokim", "2026-11-09T10:00:00Z",
+                       labels=["security"]),
+            open_issue(55, "Units: grams or cups", "ana-lee", "2026-11-11T10:00:00Z", labels=["question"]),
+        ],
+        "closed_prs": [
+            closed_pr(60, "First version of the recipe endpoints", "cypark", "2026-11-03T10:00:00Z"),
+            closed_pr(59, "Database for recipes and ingredients", "bokim", "2026-10-21T10:00:00Z"),
+        ],
+        "closed_issues": [closed_issue(51, "Pick a recipe data source", "ana-lee", "2026-10-15T10:00:00Z")],
+        "releases": [],
+    }
+    return _as_repo(data, "example-org/recipe-api")
+
+
+def mobile_app() -> dict[str, Any]:
+    """A quiet repo: one old PR with a failing check, nothing closed lately."""
+    data = {
+        **demo(),
+        "open_prs": [
+            open_pr(14, "Upgrade the app framework", "dee-ross", "2026-09-04T10:00:00Z",
+                    "chore/upgrade", checks="FAILURE", size=(800, 640, 41)),
+        ],
+        "open_issues": [
+            open_issue(11, "App icon looks blurry on tablets", "ana-lee", "2026-09-02T10:00:00Z",
+                       labels=["bug"]),
+            open_issue(12, "Push notifications when a list is shared", "bokim", "2026-09-10T10:00:00Z",
+                       assignees=["dee-ross"], labels=["feature"]),
+        ],
+        "closed_prs": [],
+        "closed_issues": [],
+        "releases": [],
+    }
+    return _as_repo(data, "example-org/mobile-app")
+
+
+WATCH_DIR = Path(__file__).resolve().parent / "demo-watch"
+
+
+def watch_files() -> dict[str, str]:
+    """The saved data `dashboard.py watch --data-dir examples/demo-watch` reads, by file name."""
+    plan = (OUT.parent / "plan.yaml").read_text(encoding="utf-8")
+    return {
+        "example-org__pantry-planner.json": json.dumps(demo(), indent=1) + "\n",
+        "example-org__pantry-planner.plan.yaml": plan,
+        "example-org__recipe-api.json": json.dumps(recipe_api(), indent=1) + "\n",
+        "example-org__mobile-app.json": json.dumps(mobile_app(), indent=1) + "\n",
+    }
+
+
 if __name__ == "__main__":
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(demo(), indent=1) + "\n", encoding="utf-8")
     print(f"wrote {OUT}")
+    WATCH_DIR.mkdir(parents=True, exist_ok=True)
+    for name, text in watch_files().items():
+        (WATCH_DIR / name).write_text(text, encoding="utf-8")
+        print(f"wrote {WATCH_DIR / name}")

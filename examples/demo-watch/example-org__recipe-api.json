@@ -1,0 +1,254 @@
+{
+ "repo": "example-org/recipe-api",
+ "url": "https://github.com/example-org/recipe-api",
+ "fetched_at": "2026-11-12T08:00:00Z",
+ "days": 90,
+ "open_prs": [
+  {
+   "number": 61,
+   "title": "Search recipes by what is in the pantry",
+   "state": "OPEN",
+   "author": {
+    "login": "cypark"
+   },
+   "url": "https://github.com/example-org/recipe-api/pull/61",
+   "isDraft": false,
+   "createdAt": "2026-11-10T09:00:00Z",
+   "updatedAt": "2026-11-10T09:00:00Z",
+   "baseRefName": "main",
+   "headRefName": "search/by-pantry",
+   "headRepository": {
+    "name": "recipe-api"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "reviewDecision": "APPROVED",
+   "statusCheckRollup": [
+    {
+     "__typename": "CheckRun",
+     "name": "tests",
+     "status": "COMPLETED",
+     "conclusion": "SUCCESS"
+    }
+   ],
+   "closingIssuesReferences": [
+    {
+     "number": 52,
+     "url": "https://github.com/example-org/recipe-api/issues/52"
+    }
+   ],
+   "additions": 260,
+   "deletions": 40,
+   "changedFiles": 8,
+   "labels": []
+  },
+  {
+   "number": 62,
+   "title": "Cache recipe lookups for an hour",
+   "state": "OPEN",
+   "author": {
+    "login": "bokim"
+   },
+   "url": "https://github.com/example-org/recipe-api/pull/62",
+   "isDraft": false,
+   "createdAt": "2026-11-07T11:00:00Z",
+   "updatedAt": "2026-11-07T11:00:00Z",
+   "baseRefName": "main",
+   "headRefName": "perf/cache",
+   "headRepository": {
+    "name": "recipe-api"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "reviewDecision": "REVIEW_REQUIRED",
+   "statusCheckRollup": [
+    {
+     "__typename": "CheckRun",
+     "name": "tests",
+     "status": "COMPLETED",
+     "conclusion": "SUCCESS"
+    }
+   ],
+   "closingIssuesReferences": [],
+   "additions": 90,
+   "deletions": 12,
+   "changedFiles": 3,
+   "labels": []
+  },
+  {
+   "number": 63,
+   "title": "Return nutrition facts with each recipe",
+   "state": "OPEN",
+   "author": {
+    "login": "dee-ross"
+   },
+   "url": "https://github.com/example-org/recipe-api/pull/63",
+   "isDraft": false,
+   "createdAt": "2026-11-12T07:00:00Z",
+   "updatedAt": "2026-11-12T07:00:00Z",
+   "baseRefName": "main",
+   "headRefName": "api/nutrition",
+   "headRepository": {
+    "name": "recipe-api"
+   },
+   "headRepositoryOwner": {
+    "login": "example-org"
+   },
+   "reviewDecision": "",
+   "statusCheckRollup": [
+    {
+     "__typename": "CheckRun",
+     "name": "tests",
+     "status": "COMPLETED",
+     "conclusion": "SUCCESS"
+    }
+   ],
+   "closingIssuesReferences": [],
+   "additions": 150,
+   "deletions": 6,
+   "changedFiles": 5,
+   "labels": []
+  }
+ ],
+ "closed_prs": [
+  {
+   "number": 60,
+   "title": "First version of the recipe endpoints",
+   "state": "MERGED",
+   "author": {
+    "login": "cypark"
+   },
+   "url": "https://github.com/example-org/recipe-api/pull/60",
+   "createdAt": "2026-11-03T10:00:00Z",
+   "closedAt": "2026-11-03T10:00:00Z",
+   "mergedAt": "2026-11-03T10:00:00Z",
+   "labels": []
+  },
+  {
+   "number": 59,
+   "title": "Database for recipes and ingredients",
+   "state": "MERGED",
+   "author": {
+    "login": "bokim"
+   },
+   "url": "https://github.com/example-org/recipe-api/pull/59",
+   "createdAt": "2026-10-21T10:00:00Z",
+   "closedAt": "2026-10-21T10:00:00Z",
+   "mergedAt": "2026-10-21T10:00:00Z",
+   "labels": []
+  }
+ ],
+ "open_issues": [
+  {
+   "number": 52,
+   "title": "Find recipes from the ingredients I have",
+   "state": "OPEN",
+   "author": {
+    "login": "ana-lee"
+   },
+   "url": "https://github.com/example-org/recipe-api/issues/52",
+   "createdAt": "2026-10-28T10:00:00Z",
+   "updatedAt": "2026-10-28T10:00:00Z",
+   "labels": [
+    {
+     "name": "feature"
+    }
+   ],
+   "assignees": [
+    {
+     "login": "cypark"
+    }
+   ],
+   "parent": null,
+   "blockedBy": {
+    "nodes": [],
+    "totalCount": 0
+   }
+  },
+  {
+   "number": 53,
+   "title": "Recipe images load slowly",
+   "state": "OPEN",
+   "author": {
+    "login": "dee-ross"
+   },
+   "url": "https://github.com/example-org/recipe-api/issues/53",
+   "createdAt": "2026-11-05T10:00:00Z",
+   "updatedAt": "2026-11-05T10:00:00Z",
+   "labels": [
+    {
+     "name": "bug"
+    }
+   ],
+   "assignees": [],
+   "parent": null,
+   "blockedBy": {
+    "nodes": [],
+    "totalCount": 0
+   }
+  },
+  {
+   "number": 54,
+   "title": "Rate limit the public endpoints",
+   "state": "OPEN",
+   "author": {
+    "login": "bokim"
+   },
+   "url": "https://github.com/example-org/recipe-api/issues/54",
+   "createdAt": "2026-11-09T10:00:00Z",
+   "updatedAt": "2026-11-09T10:00:00Z",
+   "labels": [
+    {
+     "name": "security"
+    }
+   ],
+   "assignees": [],
+   "parent": null,
+   "blockedBy": {
+    "nodes": [],
+    "totalCount": 0
+   }
+  },
+  {
+   "number": 55,
+   "title": "Units: grams or cups",
+   "state": "OPEN",
+   "author": {
+    "login": "ana-lee"
+   },
+   "url": "https://github.com/example-org/recipe-api/issues/55",
+   "createdAt": "2026-11-11T10:00:00Z",
+   "updatedAt": "2026-11-11T10:00:00Z",
+   "labels": [
+    {
+     "name": "question"
+    }
+   ],
+   "assignees": [],
+   "parent": null,
+   "blockedBy": {
+    "nodes": [],
+    "totalCount": 0
+   }
+  }
+ ],
+ "closed_issues": [
+  {
+   "number": 51,
+   "title": "Pick a recipe data source",
+   "state": "CLOSED",
+   "stateReason": "COMPLETED",
+   "author": {
+    "login": "ana-lee"
+   },
+   "url": "https://github.com/example-org/recipe-api/issues/51",
+   "createdAt": "2026-10-15T10:00:00Z",
+   "closedAt": "2026-10-15T10:00:00Z",
+   "labels": []
+  }
+ ],
+ "releases": [],
+ "other_prs": []
+}
