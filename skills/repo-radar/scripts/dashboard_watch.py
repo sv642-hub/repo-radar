@@ -99,6 +99,7 @@ def summary(repo: str, data: dict[str, Any], plan: dict[str, Any] | None) -> dic
         "nobody": sum(github.issue_group(i, prs_for_issue) == "nobody" for i in data["open_issues"]),
         "newest": _newest(data),
         "fetched_at": data["fetched_at"],
+        "source": data.get("source"),  # set only by saved demo data, to say it is made up
         "plan": None,
         "error": None,
     }

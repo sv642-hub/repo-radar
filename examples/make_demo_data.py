@@ -75,6 +75,7 @@ def demo() -> dict[str, Any]:
         "repo": REPO,
         "url": URL,
         "fetched_at": "2026-11-12T08:00:00Z",
+        "source": "made-up example data",  # shown in the page header instead of "from GitHub"
         "days": 90,
         "open_prs": [
             open_pr(41, "Share a shopping list by link", "ana-lee", "2026-11-03T10:00:00Z",

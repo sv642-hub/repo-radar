@@ -100,8 +100,9 @@ def test_a_broken_plan_in_one_repo_is_reported_on_its_row() -> None:
 
 
 def test_the_overview_links_each_page_and_escapes_errors(demo_data: dict, demo_plan: dict) -> None:
+    real = {k: v for k, v in demo_data.items() if k != "source"}
     rows = [
-        watching.summary(DEMO_REPO, demo_data, demo_plan),
+        watching.summary(DEMO_REPO, real, demo_plan),
         {"repo": "b/gone", "url": "https://github.com/b/gone", "error": "<script>x</script>"},
     ]
     html = page.render_index(rows, "2026-11-12T08:00:00Z")
@@ -110,6 +111,17 @@ def test_the_overview_links_each_page_and_escapes_errors(demo_data: dict, demo_p
     assert "&lt;script&gt;x" in html and "<script>x" not in html
     assert "2 repos, from GitHub, 2026-11-12 08:00:00 UTC" in html
     assert "today ago" not in html and ">today<" in html  # the newest activity was 11 hours before
+
+
+def test_pages_built_from_made_up_data_say_so_instead_of_from_github(demo_data: dict) -> None:
+    assert "made-up example data, 2026-11-12" in page.render(demo_data, None)
+    row = watching.summary(DEMO_REPO, demo_data, None)
+    assert "3 repos, made-up example data, 2026-11-12" in page.render_index([row, row, row], demo_data["fetched_at"])
+    real = {**demo_data}
+    del real["source"]
+    mixed = [row, watching.summary("a/real", real, None)]
+    assert "2 repos, from GitHub," in page.render_index(mixed, demo_data["fetched_at"])
+    assert "from GitHub, 2026-11-12" in page.render(real, None)
 
 
 def test_a_watched_page_links_back_to_the_overview(demo_data: dict) -> None:

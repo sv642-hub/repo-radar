@@ -485,7 +485,7 @@ def render(data: dict[str, Any], plan: dict[str, Any] | None, back: str | None =
     header = (
         (f'<a class="back" href="{_e(back)}">← Manager overview</a>' if back else "")
         + f'<h1>{_a(data["url"], data["repo"], "title-link")}</h1>'
-        f'<span class="note">from GitHub, {_e(built)} UTC</span>'
+        f'<span class="note">{_e(data.get("source", "from GitHub"))}, {_e(built)} UTC</span>'
         f'<nav class="tabs" role="tablist" aria-label="Repository views">{buttons}</nav>'
     )
     warnings = "".join(f'<p class="explain">{_e(w)}</p>' for w in data.get("warnings", []))
@@ -564,7 +564,9 @@ def render_index(rows: list[dict[str, Any]], built_at: str) -> str:
         + f'<tbody>{"".join(body)}</tbody></table></div></section>'
     )
     built = built_at.replace("T", " ").removesuffix("Z")
-    header = f'<h1>repo-radar · Manager overview</h1><span class="note">{len(rows)} repos, from GitHub, {_e(built)} UTC</span>'
+    sources = {r.get("source") for r in good}
+    source = sources.pop() if len(sources) == 1 and None not in sources else "from GitHub"
+    header = f'<h1>repo-radar · Manager overview</h1><span class="note">{len(rows)} repos, {_e(source)}, {_e(built)} UTC</span>'
     return _page("repo-radar overview", header, main)
 
 

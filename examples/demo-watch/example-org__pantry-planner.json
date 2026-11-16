@@ -2,6 +2,7 @@
  "repo": "example-org/pantry-planner",
  "url": "https://github.com/example-org/pantry-planner",
  "fetched_at": "2026-11-12T08:00:00Z",
+ "source": "made-up example data",
  "days": 90,
  "open_prs": [
   {
