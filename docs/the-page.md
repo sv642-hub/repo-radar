@@ -6,7 +6,7 @@
 | **Pull requests** | Open PRs sorted by what they need: ready to merge, needs review, waiting on the author, checks failing, draft. "Start here" picks up to five. |
 | **Issues** | Open issues: nobody on it yet, someone assigned, a PR open. |
 | **Graph** | How the open work links up: plan box → issue → pull request. |
-| **Done** | What closed in the last 90 days, under the release that shipped it. Commits pushed straight to the main branch, with no PR, are listed here too. |
+| **Done** | What closed in the last 90 days, under the release that shipped it. Commits pushed straight to the main branch, with no PR, are listed here too. Items can carry an [AI summary](ai-help.md) of what they changed. |
 
 It is one HTML file with nothing loaded from the internet, with search, dark mode,
 and links to GitHub on every item.

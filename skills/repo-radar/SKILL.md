@@ -1,13 +1,16 @@
 ---
 name: repo-radar
-description: repo-radar. Build a one-page HTML dashboard of a GitHub repo (open pull requests sorted by what they need, open issues by whether anyone is on them, a graph of how PRs, issues and plan boxes link, and recently closed work by release), set it up to rebuild every day with a GitHub Action, watch several repos at once from a watch list with an overview page, and compare a team's plan file with GitHub. Use when someone wants a status dashboard or morning view of a repo or of several repos, asks "where are we", "where am I", "how are my teams' repos doing", "what is left in my section", "what needs review", "is my PR on the plan", wants their PR put on the plan, or runs the weekly plan refresh.
+description: repo-radar. Build a one-page HTML dashboard of a GitHub repo (open pull requests sorted by what they need, open issues by whether anyone is on them, a graph of how PRs, issues and plan boxes link, and recently closed work by release), set it up to rebuild every day with a GitHub Action, watch several repos at once from a watch list with an overview page, compare a team's plan file with GitHub, write plain AI summaries of what each commit and merged PR changed, and draft a first plan from a repo's history. Use when someone wants a status dashboard or morning view of a repo or of several repos, asks "where are we", "where am I", "how are my teams' repos doing", "what is left in my section", "what needs review", "is my PR on the plan", wants their PR put on the plan, runs the weekly plan refresh, wants better titles for commits ("what did each commit do"), or has no plan and wants one drafted.
 ---
 
 # repo-radar
 
 The dashboard is one HTML file, drawn from GitHub by `scripts/dashboard.py`. It
-needs Python 3.10+, PyYAML, and the GitHub CLI (`gh`), signed in. Nothing in it
-calls an AI, so it can rebuild every morning in a GitHub Action for free.
+needs Python 3.10+, PyYAML, and the GitHub CLI (`gh`), signed in. The scripts never
+call an AI, so the page can rebuild every morning in a GitHub Action for free. Two
+optional steps use you, the AI, and only when the person asks: writing summaries of
+what commits and pull requests changed, and drafting a first plan. Both save files the
+scripts then read.
 
 Its tabs:
 
@@ -204,6 +207,65 @@ pull request:
 - List the open pull requests with no item (the Plan tab's last section) in the pull
   request description, for their owners to place. Do not guess their boxes.
 - Set `as_of` to the main commit and date you checked against.
+
+## Write summaries of what each commit changed (only when asked)
+
+Commit messages like "fix" or "wip" say little. You read what each commit pushed
+straight to main, and each merged pull request, actually changed, and write one plain
+line about it. The Done tab then shows your line, marked "AI summary", above the
+original message. Each one is read once and saved, so the next run only does new ones.
+
+1. From the repo's top folder, list what has no summary yet:
+   `python SCRIPT summarize --todo > <scratch dir>/todo.json`. Each entry has a
+   `read` command that shows its changes.
+2. Say how many there are. If there are more than 40, ask before reading them all,
+   or offer to do the newest 40 first.
+3. For each one, run its `read` command and read the change. For a big change, start
+   with the list of files (`git show --stat`, `gh pr diff --name-only`) and read the
+   parts that matter.
+4. Write one line, under 120 characters, in the present tense, saying what the change
+   does, in words a teammate who did not write it would understand: "Adds a retry with
+   backoff when sync fails", not "Update sync.py". Say only what the change shows. Do
+   not guess why, and never copy secrets, keys, or personal data into a line.
+5. Save them in `<scratch dir>/new.json` as
+   `{"commits": {"<full commit id>": "<line>"}, "prs": {"<number>": "<line>"}}`, then
+   run `python SCRIPT summarize --add <scratch dir>/new.json`. It checks every line and
+   writes `.github/dashboard/summaries.yaml`. Never edit that file's ids by hand.
+6. Build the page (Look at it now) and show it. Tell the person to commit
+   `.github/dashboard/summaries.yaml` the way their team commits anything else; the
+   daily Action reads it from then on. A watch list reads it from each watched repo too.
+
+If a line is wrong, the person fixes the text in the file by hand.
+
+## Draft a plan from the history (only when asked, for a repo with no plan)
+
+A plan normally takes a person an afternoon to write. You can draft one from what the
+repo already shows, for the team to fix and keep. It is a draft: never commit it.
+
+1. Read what is there: the README and docs, the folder layout, the merged pull
+   requests (`gh pr list --state merged --limit 200 --json number,title,files`), the
+   commits (`git log --stat --since="6 months ago"`), the open pull requests and
+   issues, and `.github/dashboard/summaries.yaml` if it exists.
+2. Make **groups** for the main parts of the system (often top folders, such as the
+   app, the API, the data pipeline), **boxes** for the pieces inside each, and
+   **items** for what each piece does.
+3. Give each item the status the repo shows, and nothing more:
+   - `built`: the code is on main and does it.
+   - `simulated`: on main, but a stub, a fake, or a placeholder (raises "not
+     implemented", returns fixed data).
+   - `pr` with its number: an open pull request does it.
+   - `missing`: only when the repo itself says it is planned: an open issue (give its
+     number as `issue`), a TODO, or a roadmap in the docs. Never invent missing work.
+4. Set every `owner` to `null`. Do not decide who owns what. Tell the person who has
+   done the most work in each area, as a suggestion, and leave `people` out.
+5. Put a comment at the top: `# Draft written by AI from the repo's history on
+   <date>. Check every item, add what is missing, and set owners before committing.`
+   Set `as_of` to `"main at <short commit id>, drafted <date>"`.
+6. Write it to `docs/plan.yaml` (or where the person says), and check that it loads:
+   `python SCRIPT build --out <scratch dir>/dashboard.html`. Fix any error it names.
+7. Show the page, and tell the person in plain words: how many groups, boxes and
+   items, what you were unsure of, and that the team should check it, add the parts
+   still to build, and set owners before committing it.
 
 ## Without network access
 

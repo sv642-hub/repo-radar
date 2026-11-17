@@ -9,6 +9,8 @@
     python dashboard.py watch --out site/                 # one page per repo in watchlist.yaml, plus an overview
     python dashboard.py init --watch                      # make this repo watch other repos every day
     python dashboard.py update                            # refresh the scripts init installed, nothing else
+    python dashboard.py summarize --todo                  # commits and merged PRs with no AI summary yet
+    python dashboard.py summarize --add new.json          # save AI summaries the skill wrote
 
 Needs Python 3.10+, PyYAML, and the GitHub CLI (gh), signed in. Run it inside the
 repo, or pass --repo owner/name. The plan file is optional; by default it is
@@ -28,6 +30,7 @@ from typing import Any
 import dashboard_github as github
 import dashboard_page as page
 import dashboard_plan as plans
+import dashboard_summaries as summarizing
 import dashboard_watch as watching
 
 logging.basicConfig(
@@ -45,6 +48,7 @@ SCRIPTS = [
     "dashboard_graph.py",
     "dashboard_page.py",
     "dashboard_plan.py",
+    "dashboard_summaries.py",
     "dashboard_watch.py",
 ]
 DEFAULT_PLAN = Path("docs/plan.yaml")
@@ -78,6 +82,16 @@ def read_plan(path: Path | None, ref: str | None = None) -> dict[str, Any] | Non
     return plans.load_plan(text, str(path))
 
 
+def read_summaries(path: Path | None) -> dict[str, dict]:
+    """The AI summaries from --summaries, else .github/dashboard/summaries.yaml if it exists."""
+    path = path or Path(summarizing.PATH)
+    if not path.exists():
+        if path != Path(summarizing.PATH):
+            raise FileNotFoundError(f"{path}: no such file")
+        return summarizing.load(None)
+    return summarizing.load(path.read_text(encoding="utf-8"), str(path))
+
+
 def get_data(args: argparse.Namespace, plan: dict[str, Any] | None) -> dict[str, Any]:
     """GitHub's data: from --data when given, else fetched now through gh."""
     if args.data:
@@ -96,7 +110,8 @@ def cmd_fetch(args: argparse.Namespace) -> None:
 def cmd_build(args: argparse.Namespace) -> None:
     """Draw the page."""
     plan = read_plan(args.plan)
-    html = page.render(get_data(args, plan), plan)
+    data = {**get_data(args, plan), "summaries": read_summaries(args.summaries)}
+    html = page.render(data, plan)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(html, encoding="utf-8")
     logger.info(f"wrote {args.out}")
@@ -125,6 +140,24 @@ def cmd_me(args: argparse.Namespace) -> None:
     findings = plans.check_items(rows, prs)
     unplaced = plans.unplaced_prs(plan, data["open_prs"], login)
     sys.stdout.write(plans.report(plan, owner, login, rows, findings, unplaced))
+
+
+def cmd_summarize(args: argparse.Namespace) -> None:
+    """List what has no AI summary yet (--todo), or save new summaries into the file (--add)."""
+    path = args.summaries or Path(summarizing.PATH)
+    old = read_summaries(path) if path.exists() else summarizing.load(None)
+    if args.todo:
+        items = summarizing.todo(get_data(args, None), old)
+        sys.stdout.write(json.dumps(items, indent=1) + "\n")
+        logger.info(f"{len(items)} commits and merged pull requests have no summary yet")
+        return
+    try:
+        new = summarizing.check(json.loads(args.add.read_text(encoding="utf-8")), str(args.add))
+    except json.JSONDecodeError as error:
+        raise summarizing.SummariesError(f"{args.add}: not valid JSON: {error}") from error
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(summarizing.dump(summarizing.merge(old, new)), encoding="utf-8")
+    logger.info(f"saved {len(new['commits'])} commit and {len(new['prs'])} pull request summaries to {path}")
 
 
 def init(repo_dir: Path, plan: Path | None, with_plan: bool, cron: str, force: bool) -> list[Path]:
@@ -235,10 +268,11 @@ def cmd_init(args: argparse.Namespace) -> None:
 def cmd_watch(args: argparse.Namespace) -> None:
     """Build one page per repo on the watch list, and an overview page linking them."""
     entries = watching.load_watch_list(args.list.read_text(encoding="utf-8"), str(args.list))
-    if args.data_dir:  # saved data, for tests and offline use: owner__name.json (+ .plan.yaml)
+    if args.data_dir:  # saved data, for tests and offline use: owner__name.json (+ .plan.yaml, .summaries.yaml)
 
-        def get_plan(repo: str, _: str) -> str | None:
-            path = args.data_dir / watching.page_name(repo).replace(".html", ".plan.yaml")
+        def get_plan(repo: str, wanted: str) -> str | None:
+            kind = ".summaries.yaml" if wanted == summarizing.PATH else ".plan.yaml"
+            path = args.data_dir / watching.page_name(repo).replace(".html", kind)
             return path.read_text(encoding="utf-8") if path.exists() else None
 
         def get_data(repo: str, _: set[int]) -> dict[str, Any]:
@@ -286,7 +320,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         p = sub.add_parser(name, help=help_text)
         github_options(p)
         p.add_argument("--out", type=Path, required=True, help="the file to write")
+        if name == "build":
+            p.add_argument("--summaries", type=Path, help=f"AI summaries (default: {summarizing.PATH}, if it exists)")
         p.set_defaults(func=func)
+
+    p = sub.add_parser("summarize", help="list what has no AI summary yet, or save new ones")
+    github_options(p)
+    what = p.add_mutually_exclusive_group(required=True)
+    what.add_argument("--todo", action="store_true", help="print, as JSON, the commits and merged PRs with no summary")
+    what.add_argument("--add", type=Path, help='a JSON file of new summaries: {"commits": {id: line}, "prs": {number: line}}')
+    p.add_argument("--summaries", type=Path, help=f"the summaries file (default: {summarizing.PATH})")
+    p.set_defaults(func=cmd_summarize)
 
     p = sub.add_parser("me", help="one person's plan items, checked against their PRs")
     github_options(p)
@@ -324,6 +368,7 @@ def main(argv: list[str] | None = None) -> None:
         args.func(args)
     except (
         plans.PlanError,
+        summarizing.SummariesError,
         watching.WatchListError,
         FileExistsError,
         FileNotFoundError,

@@ -1,0 +1,8 @@
+# What each commit or merged pull request changed, written by AI from its changes.
+# The page shows these marked as AI summaries, with the original message under them.
+# Add to it with `dashboard.py summarize --add`; fix a wrong line by hand.
+commits:
+  'c4d9c4d9c4d9c4d9c4d9c4d9c4d9c4d9c4d9c4d9': "Shows an empty-list message instead of crashing when a list has no items"
+  'd2e8d2e8d2e8d2e8d2e8d2e8d2e8d2e8d2e8d2e8': "Adds a Share button to the list screen that opens the phone's share sheet"
+  'e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1': "Raises the app version to 1.3 for the next store release"
+prs: {}

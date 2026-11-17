@@ -218,6 +218,25 @@ def mobile_app() -> dict[str, Any]:
 
 WATCH_DIR = Path(__file__).resolve().parent / "demo-watch"
 
+# What the skill writes when someone asks it to summarize the commits (see SKILL.md).
+MOBILE_SUMMARIES = {
+    "c4d9": "Shows an empty-list message instead of crashing when a list has no items",
+    "d2e8": "Adds a Share button to the list screen that opens the phone's share sheet",
+    "e5a1": "Raises the app version to 1.3 for the next store release",
+}
+
+
+def mobile_summaries() -> str:
+    """The mobile-app repo's .github/dashboard/summaries.yaml."""
+    lines = [
+        "# What each commit or merged pull request changed, written by AI from its changes.",
+        "# The page shows these marked as AI summaries, with the original message under them.",
+        "# Add to it with `dashboard.py summarize --add`; fix a wrong line by hand.",
+        "commits:",
+    ]
+    lines += [f"  '{(sha * 40)[:40]}': {json.dumps(text)}" for sha, text in MOBILE_SUMMARIES.items()]
+    return "\n".join([*lines, "prs: {}", ""])
+
 
 def watch_files() -> dict[str, str]:
     """The saved data `dashboard.py watch --data-dir examples/demo-watch` reads, by file name."""
@@ -227,6 +246,7 @@ def watch_files() -> dict[str, str]:
         "example-org__pantry-planner.plan.yaml": plan,
         "example-org__recipe-api.json": json.dumps(recipe_api(), indent=1) + "\n",
         "example-org__mobile-app.json": json.dumps(mobile_app(), indent=1) + "\n",
+        "example-org__mobile-app.summaries.yaml": mobile_summaries(),
     }
 
 

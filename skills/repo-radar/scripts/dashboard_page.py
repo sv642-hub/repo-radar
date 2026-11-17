@@ -14,6 +14,7 @@ from typing import Any
 import dashboard_github as github
 import dashboard_graph as graph
 import dashboard_plan as plans
+import dashboard_summaries as summarizing
 
 ITEM_ICONS = {"built": "check", "simulated": "half", "pr": "dot", "missing": "ring"}
 ITEM_LABELS = {
@@ -392,22 +393,36 @@ def _graph_tab(plan: dict[str, Any] | None, data: dict[str, Any]) -> str:
 # ---------------------------------------------------------------- Done tab
 
 
-def _push_row(push: dict[str, Any]) -> str:
+def _titled(item: dict[str, Any], data: dict[str, Any], what: str) -> tuple[str, str, str]:
+    """An item's linked title, the line with its original message, and its search text.
+
+    With an AI summary, the summary is the title, marked as AI, and the commit message or
+    PR title moves to its own line under it. Without one, the message is the title.
+    """
+    found = summarizing.find(data, item)
+    if not found:
+        return _a(item["url"], item["title"], "title-link"), "", item["title"]
+    tip = "Written by AI from what changed. It may be wrong; the original is under it."
+    title = _a(item["url"], found, "title-link") + " " + _chip("AI summary", "ai", tip)
+    return title, f'<div class="people">{_e(what)}: {_e(item["title"])}</div>', f"{found} {item['title']}"
+
+
+def _push_row(push: dict[str, Any], data: dict[str, Any]) -> str:
     """A commit pushed straight to the main branch, with no pull request."""
     login, name = push["author"].get("login"), push["author"].get("name")
     who = _person(login) if login else _e(name or "unknown")
+    title, original, text = _titled(push, data, "commit message")
     return (
-        f'<li class="item" data-search="{_search(push["oid"][:7], push["title"], login, name, "pushed")}">'
+        f'<li class="item" data-search="{_search(push["oid"][:7], text, login, name, "pushed")}">'
         '<span class="icon check" title="pushed to the main branch"></span><div>'
-        f'{_a(push["url"], push["oid"][:7], "pill")} {_a(push["url"], push["title"], "title-link")} '
-        f'{_chip("pushed, no PR")}'
+        f'{_a(push["url"], push["oid"][:7], "pill")} {title} {_chip("pushed, no PR")}{original}'
         f'<div class="people">by {who} · pushed {_e(push["committedAt"][:10])}</div></div></li>'
     )
 
 
 def _done_row(item: dict[str, Any], data: dict[str, Any]) -> str:
     if item["kind"] == "push":
-        return _push_row(item)
+        return _push_row(item, data)
     if item["kind"] == "pr":
         good = item["state"] == "MERGED"
         what = "PR merged" if good else "PR closed without merging"
@@ -415,10 +430,12 @@ def _done_row(item: dict[str, Any], data: dict[str, Any]) -> str:
         good = item.get("stateReason") != "NOT_PLANNED"
         what = "issue closed" if good else "issue closed as not planned"
     login = item["author"]["login"]
+    title, original, text = _titled(item, data, "PR title") if item["kind"] == "pr" else (
+        _a(item["url"], item["title"], "title-link"), "", item["title"])
     return (
-        f'<li class="item" data-search="{_search(item["number"], item["title"], login, what)}">'
+        f'<li class="item" data-search="{_search(item["number"], text, login, what)}">'
         f'<span class="icon {"check" if good else "cross"}" title="{_e(what)}"></span><div>'
-        f'{_pill(item)} {_a(item["url"], item["title"], "title-link")} {_chip(what)}'
+        f'{_pill(item)} {title} {_chip(what)}{original}'
         f'<div class="people">by {_person(login)} · closed {_e(item["closedAt"][:10])}</div></div></li>'
     )
 
@@ -676,6 +693,7 @@ border:1px solid var(--btn-line);color:var(--muted);text-decoration:none;white-s
 .chip.warn{border-color:var(--gold);color:var(--warn-fg);background:var(--warn-bg);cursor:help}
 .chip.red{border-color:var(--red-line);color:var(--unowned)}
 .chip.label{color:var(--purple);border-color:var(--purple)}
+.chip.ai{border-style:dashed;color:var(--purple);border-color:var(--purple);cursor:help}
 .note{color:var(--muted);font-size:12px}
 .people{font-size:12px;color:var(--muted)}
 a{color:var(--link)}

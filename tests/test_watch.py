@@ -13,6 +13,7 @@ from conftest import DEMO, SCRIPTS
 
 import dashboard
 import dashboard_page as page
+import dashboard_summaries as summarizing
 import dashboard_watch as watching
 
 DEMO_REPO = "example-org/pantry-planner"
@@ -61,7 +62,7 @@ def _fakes(plans: dict[str, str | None], failing: set[str] = frozenset()) -> tup
 
     def get_plan(repo: str, path: str) -> str | None:
         asked.append(("plan", repo, path))
-        return plans.get(repo)
+        return None if path == summarizing.PATH else plans.get(repo)
 
     def get_data(repo: str, extra: set[int]) -> dict[str, Any]:
         asked.append(("data", repo, extra))
@@ -89,6 +90,19 @@ def test_watch_builds_each_page_and_one_failure_does_not_stop_the_rest() -> None
     assert rows[0]["plan"] and rows[2]["plan"] is None
     assert ("plan", "a/one", "docs/plan.yaml") in asked  # the default place
     assert ("data", "a/one", {38, 39, 41, 42, 44, 45, 47}) in asked  # the plan's PRs are fetched too
+
+
+def test_watch_reads_each_repos_summaries_and_a_broken_file_only_warns() -> None:
+    files = {"a/one": 'prs: {39: "Reads barcodes"}', "b/two": "prs: {x: y}"}
+    get_plan, get_data, _ = _fakes({})
+    pages, rows = watching.watch(
+        watching.load_watch_list("repos: [a/one, b/two]"),
+        lambda repo, path: files.get(repo) if path == summarizing.PATH else get_plan(repo, path),
+        get_data,
+        page.render,
+    )
+    assert "Reads barcodes" in pages["a__one.html"]
+    assert "AI summaries not shown" in pages["b__two.html"] and rows[1]["error"] is None
 
 
 def test_a_plan_path_that_does_not_exist_is_reported_not_ignored() -> None:

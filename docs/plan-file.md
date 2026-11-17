@@ -24,5 +24,8 @@ Each item is `built`, `simulated` (merged, but a stub or fake), `pr` (with its
 number), or `missing`. The full format is at the top of
 [`dashboard_plan.py`](../skills/repo-radar/scripts/dashboard_plan.py).
 
+No plan yet? The skill can draft one from the repo's history for your team to check: see
+[Let the AI help](ai-help.md).
+
 To keep it current without merge fights: each pull request updates only its own items,
 and once a week one person marks what merged (the page flags those) and sets `as_of`.

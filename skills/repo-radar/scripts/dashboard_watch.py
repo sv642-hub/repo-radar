@@ -11,7 +11,8 @@ The watch list is a YAML file:
         plan: docs/img/architecture.yaml
 
 Each repo's plan is read from that repo on GitHub, at `plan` or else at
-docs/plan.yaml. A repo without one simply gets no Plan tab.
+docs/plan.yaml. A repo without one simply gets no Plan tab. Its AI summaries, if it
+has any, are read from .github/dashboard/summaries.yaml.
 """
 
 import logging
@@ -23,6 +24,7 @@ import yaml
 
 import dashboard_github as github
 import dashboard_plan as plans
+import dashboard_summaries as summarizing
 
 REPO_NAME = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 DEFAULT_PLAN = "docs/plan.yaml"
@@ -120,6 +122,15 @@ def _error_row(repo: str, message: str) -> dict[str, Any]:
     return {"repo": repo, "url": f"https://github.com/{repo}", "error": message}
 
 
+def _with_summaries(repo: str, data: dict[str, Any], get_file: Callable[[str, str], str | None]) -> dict[str, Any]:
+    """The data plus the repo's AI summaries. A broken file becomes a warning on its page."""
+    try:
+        found = summarizing.load(get_file(repo, summarizing.PATH), f"{repo}/{summarizing.PATH}")
+    except summarizing.SummariesError as error:
+        return {**data, "warnings": [*data.get("warnings", []), f"AI summaries not shown: {error}"]}
+    return {**data, "summaries": found}
+
+
 def watch(
     entries: list[dict[str, Any]],
     get_plan: Callable[[str, str], str | None],
@@ -133,7 +144,7 @@ def watch(
 
     Args:
         entries: From load_watch_list.
-        get_plan: (repo, path) -> the plan file's text, or None if the repo has none.
+        get_plan: (repo, path) -> that file's text, or None if the repo has none.
         get_data: (repo, PR numbers the plan points at) -> GitHub's data for the repo.
         render_page: (data, plan) -> the repo's HTML page.
 
@@ -150,6 +161,7 @@ def watch(
                 raise plans.PlanError(f"{repo}: no file at {path}")
             plan = plans.load_plan(text, f"{repo}/{path}") if text is not None else None
             data = get_data(repo, plans.plan_prs(plan) if plan else set())
+            data = _with_summaries(repo, data, get_plan)
             pages[page_name(repo)] = render_page(data, plan)
             rows.append(summary(repo, data, plan))
         except (plans.PlanError, RuntimeError) as error:

@@ -9,5 +9,7 @@
 | `dashboard.py init --watch` | Make a repo of yours watch other repos every day |
 | `dashboard.py update` | Bring a repo's copy of the scripts up to date; leaves your watch list, plan, and Action alone |
 | `dashboard.py fetch --out data.json` | Save what GitHub said, to draw later with `build --data` |
+| `dashboard.py summarize --todo` | List the commits and merged PRs with no AI summary yet ([Let the AI help](ai-help.md)) |
+| `dashboard.py summarize --add new.json` | Save AI summaries into `.github/dashboard/summaries.yaml` |
 
 Each takes `--help`. To run the tests: `uv run pytest`.

@@ -26,6 +26,7 @@ Then ask Claude to "set up repo-radar". For Codex or plain Python, see [Install]
 - [The plan file](docs/plan-file.md)
 - [How it sorts things](docs/sorting.md)
 - [Commands](docs/commands.md)
+- [Let the AI help](docs/ai-help.md): summaries of what each commit changed, and a first plan
 
 ## Credits
 
