@@ -17,7 +17,7 @@ Its tabs:
 | Pull requests | Open PRs sorted by what they need: ready to merge, needs review, waiting on the author, checks failing, draft. "Start here" picks up to five. |
 | Issues | Open issues: nobody on it yet, someone assigned, a PR is open. |
 | Graph | How open work links: plan box → issue → PR, sub-issues, "blocked by", PRs built on other PRs' branches. |
-| Done | PRs and issues closed in the last 90 days, under the release that shipped them. |
+| Done | PRs and issues closed in the last 90 days, and commits pushed straight to the main branch with no PR, under the release that shipped them. |
 
 There are two ways to set it up. Ask which one the person wants if it is not clear:
 

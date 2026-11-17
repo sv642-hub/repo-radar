@@ -1,4 +1,4 @@
-"""Ask GitHub for a repo's pull requests, issues, and releases, and sort them.
+"""Ask GitHub for a repo's pull requests, issues, releases, and pushes, and sort them.
 
 Everything goes through the GitHub CLI (`gh`), so it uses whoever is signed in on
 this computer, or the GH_TOKEN a GitHub Action gives it. Nothing here calls an AI:
@@ -115,6 +115,54 @@ def issue_relationships(issues: list[dict[str, Any]]) -> list[str]:
     return list(dict.fromkeys(warnings))
 
 
+PUSHES_QUERY = """query($owner: String!, $name: String!, $since: GitTimestamp!, $after: String) {
+  repository(owner: $owner, name: $name) { defaultBranchRef { target { ... on Commit {
+    history(first: 100, since: $since, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes { oid messageHeadline committedDate url author { name user { login } }
+        associatedPullRequests(first: 5) { nodes { merged } } }
+    }
+  } } } }
+}"""
+
+
+def pushes(repo: str, since: datetime, limit: int) -> list[dict[str, Any]]:
+    """Commits on the default branch since a time that no merged pull request brought in.
+
+    These are pushed straight to the branch, so the PR lists never show them.
+    """
+    owner, name = repo.split("/")
+    found: list[dict[str, Any]] = []
+    after: str | None = None
+    seen = 0
+    while seen < limit:
+        args = ["api", "graphql", "-f", f"query={PUSHES_QUERY}", "-f", f"owner={owner}", "-f", f"name={name}",
+                "-f", f"since={since.strftime('%Y-%m-%dT%H:%M:%SZ')}"]
+        if after:
+            args += ["-f", f"after={after}"]
+        branch = _gh(args)["data"]["repository"]["defaultBranchRef"]
+        if not branch:  # an empty repo has no default branch yet
+            return []
+        history = branch["target"]["history"]
+        for commit in history["nodes"]:
+            seen += 1
+            if any(pr["merged"] for pr in commit["associatedPullRequests"]["nodes"]):
+                continue
+            author = commit.get("author") or {}
+            found.append({
+                "oid": commit["oid"],
+                "title": commit["messageHeadline"],
+                "url": commit["url"],
+                "committedAt": commit["committedDate"],
+                "author": {"login": (author.get("user") or {}).get("login"), "name": author.get("name")},
+            })
+        if not history["pageInfo"]["hasNextPage"]:
+            return found
+        after = history["pageInfo"]["endCursor"]
+    logger.warning(f"looked at {seen} commits, the limit; raise --limit to see all pushes")
+    return found
+
+
 def fetch(
     repo: str | None,
     days: int,
@@ -149,6 +197,11 @@ def fetch(
         "other_prs": [],
     }
     data["warnings"] = issue_relationships(data["open_issues"])
+    try:
+        data["pushes"] = pushes(data["repo"], now - timedelta(days=days), limit)
+    except (RuntimeError, KeyError, TypeError):
+        data["pushes"] = []
+        data["warnings"].append("Commits pushed straight to the main branch are unavailable; the rest is shown.")
     known = {pr["number"] for pr in data["open_prs"] + data["closed_prs"]}
     for number in sorted(extra_prs - known):
         try:
@@ -248,7 +301,7 @@ def age(stamp: str, now: str) -> str:
 
 
 def done_groups(data: dict[str, Any]) -> list[tuple[str, list[dict[str, Any]]]]:
-    """Closed pull requests and issues, grouped by the release that shipped them, newest first.
+    """Closed pull requests and issues, and pushes, grouped by the release that shipped them, newest first.
 
     Each one sits under the first release published after it closed. Those closed after
     the last release sit under "Not released yet". A repo with no releases is grouped
@@ -256,6 +309,7 @@ def done_groups(data: dict[str, Any]) -> list[tuple[str, list[dict[str, Any]]]]:
     """
     done = [{**pr, "kind": "pr"} for pr in data["closed_prs"]]
     done += [{**issue, "kind": "issue"} for issue in data["closed_issues"]]
+    done += [{**push, "kind": "push", "closedAt": push["committedAt"]} for push in data.get("pushes", [])]
     done.sort(key=lambda d: d["closedAt"], reverse=True)
     releases = sorted(
         (r for r in data["releases"] if r.get("publishedAt")), key=lambda r: r["publishedAt"]

@@ -70,6 +70,13 @@ def closed_issue(number, title, login, closed, reason="COMPLETED") -> dict[str, 
     }
 
 
+def pushed(sha: str, title: str, login: str, when: str) -> dict[str, Any]:
+    """A commit pushed straight to main, with no pull request."""
+    oid = (sha * 40)[:40]
+    return {"oid": oid, "title": title, "url": f"{URL}/commit/{oid}", "committedAt": when,
+            "author": {"login": login, "name": login}}
+
+
 def demo() -> dict[str, Any]:
     return {
         "repo": REPO,
@@ -138,6 +145,10 @@ def demo() -> dict[str, Any]:
             {"tagName": "v0.1.0", "publishedAt": "2026-10-01T12:00:00Z"},
         ],
         "other_prs": [],
+        "pushes": [
+            pushed("a1f3", "Fix a typo in the README", "dee-ross", "2026-11-07T10:00:00Z"),
+            pushed("b7c2", "Update the staging server address", "cypark", "2026-10-29T16:00:00Z"),
+        ],
     }
 
 
@@ -174,12 +185,13 @@ def recipe_api() -> dict[str, Any]:
         ],
         "closed_issues": [closed_issue(51, "Pick a recipe data source", "ana-lee", "2026-10-15T10:00:00Z")],
         "releases": [],
+        "pushes": [],
     }
     return _as_repo(data, "example-org/recipe-api")
 
 
 def mobile_app() -> dict[str, Any]:
-    """A quiet repo: one old PR with a failing check, nothing closed lately."""
+    """A repo where people push straight to main: one old PR with a failing check, no merged PRs."""
     data = {
         **demo(),
         "open_prs": [
@@ -195,6 +207,11 @@ def mobile_app() -> dict[str, Any]:
         "closed_prs": [],
         "closed_issues": [],
         "releases": [],
+        "pushes": [
+            pushed("c4d9", "Fix the crash when the list is empty", "dee-ross", "2026-11-10T19:00:00Z"),
+            pushed("d2e8", "Add the share button to the list screen", "bokim", "2026-11-04T12:00:00Z"),
+            pushed("e5a1", "Bump the app version to 1.3", "dee-ross", "2026-10-21T09:00:00Z"),
+        ],
     }
     return _as_repo(data, "example-org/mobile-app")
 

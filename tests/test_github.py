@@ -1,5 +1,6 @@
 """Sorting what GitHub says: PR groups, issue groups, ages, and releases."""
 
+from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -85,8 +86,40 @@ def test_age_in_plain_words(stamp: str, expected: str) -> None:
 def test_done_items_sit_under_the_first_release_after_they_closed(demo_data: dict) -> None:
     groups = dict(github.done_groups(demo_data))
     assert list(groups) == ["Not released yet", "v0.2.0", "v0.1.0"]
-    assert {i["number"] for i in groups["Not released yet"]} == {39, 38, 8, 7}
+    assert {i.get("number") for i in groups["Not released yet"] if i["kind"] != "push"} == {39, 38, 8, 7}
+    assert [i["title"] for i in groups["Not released yet"] if i["kind"] == "push"] == ["Fix a typo in the README"]
+    assert [i["title"] for i in groups["v0.2.0"] if i["kind"] == "push"] == ["Update the staging server address"]
     assert {i["number"] for i in groups["v0.1.0"]} == {34, 33}
+
+
+def _commit(oid: str, merged: list[bool]) -> dict:
+    return {"oid": oid * 40, "messageHeadline": f"commit {oid}", "committedDate": "2026-11-10T10:00:00Z",
+            "url": f"https://github.com/o/r/commit/{oid}", "author": {"name": "Dee", "user": None},
+            "associatedPullRequests": {"nodes": [{"merged": m} for m in merged]}}
+
+
+def test_pushes_keeps_commits_no_merged_pr_brought_in_across_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+    pages = [
+        {"nodes": [_commit("a", []), _commit("b", [True])], "pageInfo": {"hasNextPage": True, "endCursor": "X"}},
+        {"nodes": [_commit("c", [False])], "pageInfo": {"hasNextPage": False, "endCursor": None}},
+    ]
+    calls = []
+
+    def gh(args: list[str]) -> dict:
+        calls.append(args)
+        history = pages[len(calls) - 1]
+        return {"data": {"repository": {"defaultBranchRef": {"target": {"history": history}}}}}
+
+    monkeypatch.setattr(github, "_gh", gh)
+    found = github.pushes("o/r", datetime(2026, 8, 1, tzinfo=timezone.utc), 500)
+    assert [p["oid"][0] for p in found] == ["a", "c"]  # b came in through a merged PR
+    assert found[0]["author"] == {"login": None, "name": "Dee"}
+    assert "after=X" in calls[1] and "since=2026-08-01T00:00:00Z" in calls[0]
+
+
+def test_a_repo_with_no_commits_has_no_pushes(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(github, "_gh", lambda _: {"data": {"repository": {"defaultBranchRef": None}}})
+    assert github.pushes("o/r", datetime(2026, 8, 1, tzinfo=timezone.utc), 500) == []
 
 
 def test_without_releases_done_items_are_grouped_by_month(demo_data: dict) -> None:

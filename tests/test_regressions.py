@@ -23,6 +23,8 @@ def test_fetch_uses_cli_fields_and_enriches_relationships(monkeypatch):
         calls.append(args)
         if args[:2] == ['repo', 'view']:
             return {'nameWithOwner': 'o/r', 'url': 'https://github.com/o/r'}
+        if args[:2] == ['api', 'graphql'] and 'history' in args[3]:
+            raise RuntimeError('commits are unavailable')
         if args[:2] == ['api', 'graphql']:
             return {'data': {'nodes': [{'id': 'I_1', 'parent': {'number': 2, 'url': 'https://github.com/o/r/issues/2'}, 'blockedBy': {'nodes': []}}]}}
         if args[:2] == ['issue', 'list']:
@@ -33,7 +35,8 @@ def test_fetch_uses_cli_fields_and_enriches_relationships(monkeypatch):
     monkeypatch.setattr(github, '_gh', gh)
     data = github.fetch('o/r', 90, 500, set())
     assert data['open_issues'][0]['parent']['number'] == 2
-    assert data['warnings'] == []
+    assert data['pushes'] == [] and len(data['warnings']) == 1  # missing pushes do not hide the rest
+    assert 'pushed straight to the main branch' in data['warnings'][0]
     assert any(c[:2] == ['api', 'graphql'] for c in calls)
 
 

@@ -687,5 +687,27 @@
    "publishedAt": "2026-10-01T12:00:00Z"
   }
  ],
- "other_prs": []
+ "other_prs": [],
+ "pushes": [
+  {
+   "oid": "a1f3a1f3a1f3a1f3a1f3a1f3a1f3a1f3a1f3a1f3",
+   "title": "Fix a typo in the README",
+   "url": "https://github.com/example-org/pantry-planner/commit/a1f3a1f3a1f3a1f3a1f3a1f3a1f3a1f3a1f3a1f3",
+   "committedAt": "2026-11-07T10:00:00Z",
+   "author": {
+    "login": "dee-ross",
+    "name": "dee-ross"
+   }
+  },
+  {
+   "oid": "b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2",
+   "title": "Update the staging server address",
+   "url": "https://github.com/example-org/pantry-planner/commit/b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2",
+   "committedAt": "2026-10-29T16:00:00Z",
+   "author": {
+    "login": "cypark",
+    "name": "cypark"
+   }
+  }
+ ]
 }

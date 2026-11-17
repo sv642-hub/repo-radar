@@ -73,6 +73,11 @@ def _fakes(plans: dict[str, str | None], failing: set[str] = frozenset()) -> tup
     return get_plan, get_data, asked
 
 
+def test_last_activity_counts_pushes(demo_data: dict) -> None:
+    demo_data["pushes"][0]["committedAt"] = "2026-11-12T07:00:00Z"
+    assert watching.summary(DEMO_REPO, demo_data, None)["newest"] == "2026-11-12T07:00:00Z"
+
+
 def test_watch_builds_each_page_and_one_failure_does_not_stop_the_rest() -> None:
     plan_text = (DEMO / "plan.yaml").read_text(encoding="utf-8")
     get_plan, get_data, asked = _fakes({"a/one": plan_text}, failing={"b/gone"})

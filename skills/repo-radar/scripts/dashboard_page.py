@@ -392,7 +392,22 @@ def _graph_tab(plan: dict[str, Any] | None, data: dict[str, Any]) -> str:
 # ---------------------------------------------------------------- Done tab
 
 
+def _push_row(push: dict[str, Any]) -> str:
+    """A commit pushed straight to the main branch, with no pull request."""
+    login, name = push["author"].get("login"), push["author"].get("name")
+    who = _person(login) if login else _e(name or "unknown")
+    return (
+        f'<li class="item" data-search="{_search(push["oid"][:7], push["title"], login, name, "pushed")}">'
+        '<span class="icon check" title="pushed to the main branch"></span><div>'
+        f'{_a(push["url"], push["oid"][:7], "pill")} {_a(push["url"], push["title"], "title-link")} '
+        f'{_chip("pushed, no PR")}'
+        f'<div class="people">by {who} · pushed {_e(push["committedAt"][:10])}</div></div></li>'
+    )
+
+
 def _done_row(item: dict[str, Any], data: dict[str, Any]) -> str:
+    if item["kind"] == "push":
+        return _push_row(item)
     if item["kind"] == "pr":
         good = item["state"] == "MERGED"
         what = "PR merged" if good else "PR closed without merging"
@@ -419,6 +434,7 @@ def _done_tab(data: dict[str, Any]) -> str:
                 (len(data["closed_issues"]) - not_planned, "issues closed"),
                 (not_planned, "issues not planned"),
             ]
+            + ([(len(data["pushes"]), "pushed with no PR")] if data.get("pushes") else [])
         ),
         f'<p class="explain">The last {_e(data["days"])} days. '
         + (
@@ -429,13 +445,15 @@ def _done_tab(data: dict[str, Any]) -> str:
     ]
     for index, (name, items) in enumerate(github.done_groups(data)):
         prs = [i for i in items if i["kind"] == "pr"]
+        issues = sum(i["kind"] == "issue" for i in items)
+        pushed = len(items) - len(prs) - issues
         sub = (
-            f"{sum(p['state'] == 'MERGED' for p in prs)} PRs merged, "
-            f"{len(items) - len(prs)} issues closed"
+            f"{sum(p['state'] == 'MERGED' for p in prs)} PRs merged, {issues} issues closed"
+            + (f", {pushed} pushed with no PR" if pushed else "")
         )
         rows = [_done_row(i, data) for i in items]
         out.append(_section(name, sub, _card(rows, "green"), is_open=index < 3))
-    if not data["closed_prs"] and not data["closed_issues"]:
+    if not data["closed_prs"] and not data["closed_issues"] and not data.get("pushes"):
         out.append('<p class="explain">Nothing closed in this time.</p>')
     return "".join(out)
 

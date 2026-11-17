@@ -72,13 +72,14 @@ def page_name(repo: str) -> str:
 
 
 def _newest(data: dict[str, Any]) -> str | None:
-    """The time of the newest activity: a PR or issue opened, updated, or closed."""
+    """The time of the newest activity: a PR or issue opened, updated, or closed, or a push."""
     stamps = [
         thing.get(key)
         for kind in ("open_prs", "closed_prs", "open_issues", "closed_issues")
         for thing in data[kind]
         for key in ("updatedAt", "closedAt", "createdAt")
     ]
+    stamps += [push["committedAt"] for push in data.get("pushes", [])]
     stamps = [s for s in stamps if s]
     return max(stamps) if stamps else None
 

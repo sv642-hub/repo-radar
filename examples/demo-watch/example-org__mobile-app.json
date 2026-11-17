@@ -93,5 +93,37 @@
  ],
  "closed_issues": [],
  "releases": [],
- "other_prs": []
+ "other_prs": [],
+ "pushes": [
+  {
+   "oid": "c4d9c4d9c4d9c4d9c4d9c4d9c4d9c4d9c4d9c4d9",
+   "title": "Fix the crash when the list is empty",
+   "url": "https://github.com/example-org/mobile-app/commit/c4d9c4d9c4d9c4d9c4d9c4d9c4d9c4d9c4d9c4d9",
+   "committedAt": "2026-11-10T19:00:00Z",
+   "author": {
+    "login": "dee-ross",
+    "name": "dee-ross"
+   }
+  },
+  {
+   "oid": "d2e8d2e8d2e8d2e8d2e8d2e8d2e8d2e8d2e8d2e8",
+   "title": "Add the share button to the list screen",
+   "url": "https://github.com/example-org/mobile-app/commit/d2e8d2e8d2e8d2e8d2e8d2e8d2e8d2e8d2e8d2e8",
+   "committedAt": "2026-11-04T12:00:00Z",
+   "author": {
+    "login": "bokim",
+    "name": "bokim"
+   }
+  },
+  {
+   "oid": "e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1",
+   "title": "Bump the app version to 1.3",
+   "url": "https://github.com/example-org/mobile-app/commit/e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1",
+   "committedAt": "2026-10-21T09:00:00Z",
+   "author": {
+    "login": "dee-ross",
+    "name": "dee-ross"
+   }
+  }
+ ]
 }

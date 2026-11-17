@@ -6,10 +6,13 @@
 | **Pull requests** | Open PRs sorted by what they need: ready to merge, needs review, waiting on the author, checks failing, draft. "Start here" picks up to five. |
 | **Issues** | Open issues: nobody on it yet, someone assigned, a PR open. |
 | **Graph** | How the open work links up: plan box → issue → pull request. |
-| **Done** | What closed in the last 90 days, under the release that shipped it. |
+| **Done** | What closed in the last 90 days, under the release that shipped it. Commits pushed straight to the main branch, with no PR, are listed here too. |
 
 It is one HTML file with nothing loaded from the internet, with search, dark mode,
 and links to GitHub on every item.
+
+repo-radar works best when changes go through pull requests: a push straight to
+main shows up only in Done, not as work waiting on someone.
 
 ![The Graph tab, in dark mode](screenshot-graph.png)
 

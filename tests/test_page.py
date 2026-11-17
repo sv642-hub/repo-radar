@@ -85,3 +85,28 @@ def test_an_empty_repo_still_renders() -> None:
     assert "No open pull requests." in html
     assert "Nothing links up yet." in html
     assert "Nothing closed in this time." in html
+
+
+def test_the_done_tab_shows_pushes_with_no_pr(demo_data: dict) -> None:
+    html = page.render(demo_data, None)
+    assert "2</div>pushed with no PR" in html
+    assert "Fix a typo in the README" in html and "pushed, no PR" in html
+    assert "1 pushed with no PR" in html  # in the "Not released yet" section's count
+
+
+def test_a_push_by_someone_github_does_not_know_shows_their_name(demo_data: dict) -> None:
+    demo_data["pushes"][0]["author"] = {"login": None, "name": "<b>Dee</b>"}
+    html = page.render(demo_data, None)
+    assert "by &lt;b&gt;Dee&lt;/b&gt;" in html
+
+
+def test_saved_data_from_before_pushes_still_renders(demo_data: dict) -> None:
+    del demo_data["pushes"]
+    html = page.render(demo_data, None)
+    assert "pushed with no PR" not in html and 'data-tab="done"' in html
+
+
+def test_a_repo_with_only_pushes_says_what_was_pushed(demo_data: dict) -> None:
+    demo_data.update(closed_prs=[], closed_issues=[])
+    html = page.render(demo_data, None)
+    assert "Nothing closed in this time" not in html and "Fix a typo in the README" in html

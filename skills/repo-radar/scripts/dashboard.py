@@ -277,7 +277,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         p.add_argument("--plan", type=Path, help=f"the plan file (default: {DEFAULT_PLAN}, if it exists)")
         p.add_argument("--data", type=Path, help="read GitHub's data from a file saved by fetch")
         p.add_argument("--days", type=int, default=90, help="how far back the Done tab goes")
-        p.add_argument("--limit", type=int, default=500, help="most PRs or issues to fetch per list")
+        p.add_argument("--limit", type=int, default=500, help="most PRs, issues, or commits to fetch per list")
 
     for name, func, help_text in [
         ("build", cmd_build, "draw the page"),
@@ -300,7 +300,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--out", type=Path, required=True, help="the folder to write the pages to")
     p.add_argument("--data-dir", type=Path, help="read saved data (owner__name.json) instead of GitHub")
     p.add_argument("--days", type=int, default=90, help="how far back the Done tab goes")
-    p.add_argument("--limit", type=int, default=500, help="most PRs or issues to fetch per list")
+    p.add_argument("--limit", type=int, default=500, help="most PRs, issues, or commits to fetch per list")
     p.set_defaults(func=cmd_watch)
 
     p = sub.add_parser("init", help="add the dashboard to a repo")
