@@ -303,9 +303,9 @@ def age(stamp: str, now: str) -> str:
 def done_groups(data: dict[str, Any]) -> list[tuple[str, list[dict[str, Any]]]]:
     """Closed pull requests and issues, and pushes, grouped by the release that shipped them, newest first.
 
-    Each one sits under the first release published after it closed. Those closed after
+    Each one sits under the first release published after it closed or was pushed. Those after
     the last release sit under "Not released yet". A repo with no releases is grouped
-    by the month things closed instead.
+    by month instead.
     """
     done = [{**pr, "kind": "pr"} for pr in data["closed_prs"]]
     done += [{**issue, "kind": "issue"} for issue in data["closed_issues"]]

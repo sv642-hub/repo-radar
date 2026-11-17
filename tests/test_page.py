@@ -110,3 +110,13 @@ def test_a_repo_with_only_pushes_says_what_was_pushed(demo_data: dict) -> None:
     demo_data.update(closed_prs=[], closed_issues=[])
     html = page.render(demo_data, None)
     assert "Nothing closed in this time" not in html and "Fix a typo in the README" in html
+
+
+def test_done_sections_count_only_the_kinds_they_have(demo_data: dict) -> None:
+    demo_data.update(closed_prs=[], closed_issues=[], releases=[])
+    html = page.render(demo_data, None)
+    assert "1 pushed with no PR" in html and "0 PRs merged" not in html and "0 issues closed" not in html
+    assert "grouped by month." in html
+    assert page._done_counts([{"kind": "pr", "state": "MERGED"}, {"kind": "issue"}, {"kind": "issue"}]) == (
+        "1 PR merged, 2 issues closed"
+    )

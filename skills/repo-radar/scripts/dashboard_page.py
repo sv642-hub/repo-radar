@@ -423,6 +423,18 @@ def _done_row(item: dict[str, Any], data: dict[str, Any]) -> str:
     )
 
 
+def _done_counts(items: list[dict[str, Any]]) -> str:
+    """ "2 PRs merged, 1 pushed with no PR": only the kinds this section has."""
+    merged = sum(i["kind"] == "pr" and i["state"] == "MERGED" for i in items)
+    counts = [
+        (merged, "PR merged", "PRs merged"),
+        (sum(i["kind"] == "pr" for i in items) - merged, "PR closed without merging", "PRs closed without merging"),
+        (sum(i["kind"] == "issue" for i in items), "issue closed", "issues closed"),
+        (sum(i["kind"] == "push" for i in items), "pushed with no PR", "pushed with no PR"),
+    ]
+    return ", ".join(f"{n} {one if n == 1 else many}" for n, one, many in counts if n)
+
+
 def _done_tab(data: dict[str, Any]) -> str:
     merged = sum(pr["state"] == "MERGED" for pr in data["closed_prs"])
     not_planned = sum(i.get("stateReason") == "NOT_PLANNED" for i in data["closed_issues"])
@@ -438,19 +450,13 @@ def _done_tab(data: dict[str, Any]) -> str:
         ),
         f'<p class="explain">The last {_e(data["days"])} days. '
         + (
-            "Each sits under the first release published after it closed.</p>"
+            "Each sits under the first release published after it closed or was pushed.</p>"
             if data["releases"]
-            else "This repo has no releases, so they are grouped by the month they closed.</p>"
+            else "This repo has no releases, so they are grouped by month.</p>"
         ),
     ]
     for index, (name, items) in enumerate(github.done_groups(data)):
-        prs = [i for i in items if i["kind"] == "pr"]
-        issues = sum(i["kind"] == "issue" for i in items)
-        pushed = len(items) - len(prs) - issues
-        sub = (
-            f"{sum(p['state'] == 'MERGED' for p in prs)} PRs merged, {issues} issues closed"
-            + (f", {pushed} pushed with no PR" if pushed else "")
-        )
+        sub = _done_counts(items)
         rows = [_done_row(i, data) for i in items]
         out.append(_section(name, sub, _card(rows, "green"), is_open=index < 3))
     if not data["closed_prs"] and not data["closed_issues"] and not data.get("pushes"):
