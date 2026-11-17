@@ -23,7 +23,7 @@ def test_a_good_file_loads_with_numbers_for_prs() -> None:
 @pytest.mark.parametrize(
     "text, message",
     [
-        ("other: {}", "only `commits` and `prs`"),
+        ("other: {}", "only `commits`, `prs`, and `digest`"),
         ("commits: {abc1234: x}", "full commit id"),
         ("commits: {1234567890123456789012345678901234567890: x}", "full commit id"),  # unquoted, read as a number
         (f'commits: {{"{SHA}": ""}}', "one line"),
@@ -96,3 +96,44 @@ def test_summarize_refuses_bad_json_and_leaves_the_file_alone(tmp_path: Path) ->
     assert not (tmp_path / summarizing.PATH).exists()
     (tmp_path / "new.json").write_text("{not json")
     assert "not valid JSON" in _run(tmp_path, "summarize", "--add", "new.json").stderr
+
+
+DIGEST = {"written": "2026-11-17", "covers": "the last 3 commits",
+          "groups": [{"title": "Fixes", "items": ["The list no longer <crashes> when empty"]}]}
+
+
+def test_a_digest_loads_and_a_new_one_replaces_the_old() -> None:
+    found = summarizing.check({"digest": DIGEST})
+    assert found["digest"] == DIGEST
+    newer = {**DIGEST, "written": "2026-11-18"}
+    merged = summarizing.merge(found, summarizing.check({"digest": newer}))
+    assert merged["digest"]["written"] == "2026-11-18"
+    assert summarizing.merge(merged, summarizing.check({}))["digest"]["written"] == "2026-11-18"  # kept
+    assert summarizing.load(summarizing.dump(merged)) == merged
+
+
+@pytest.mark.parametrize(
+    "digest, message",
+    [
+        ({"written": "x", "covers": "y"}, "list of `groups`"),
+        ({**DIGEST, "extra": 1}, "list of `groups`"),
+        ({**DIGEST, "covers": ""}, "give `covers` as text"),
+        ({**DIGEST, "groups": [{"title": "x", "items": []}]}, "a `title` and a list of `items`"),
+        ({**DIGEST, "groups": [{"title": "x", "items": ["a\nb"]}]}, "one line"),
+        ({**DIGEST, "groups": [{"title": "x", "items": ["y" * 301]}]}, "under 300"),
+        ({**DIGEST, "groups": [{"title": str(i), "items": ["y"]} for i in range(13)]}, "12 groups"),
+    ],
+)
+def test_a_bad_digest_is_refused(digest: dict, message: str) -> None:
+    with pytest.raises(summarizing.SummariesError, match=message):
+        summarizing.check({"digest": digest})
+
+
+def test_the_done_tab_opens_with_the_digest_escaped(demo_data: dict) -> None:
+    demo_data["summaries"] = summarizing.check({"digest": DIGEST})
+    html = page.render(demo_data, None)
+    done = html[html.index('id="done"'):]
+    assert done.index("What changed") < done.index("PRs merged")
+    assert "The list no longer &lt;crashes&gt; when empty" in done
+    assert "covers the last 3 commits · written 2026-11-17" in done
+    assert "What changed" not in page.render({**demo_data, "summaries": None}, None)

@@ -212,8 +212,10 @@ pull request:
 
 Commit messages like "fix" or "wip" say little. You read what each commit pushed
 straight to main, and each merged pull request, actually changed, and write one plain
-line about it. The Done tab then shows your line, marked "AI summary", above the
-original message. Each one is read once and saved, so the next run only does new ones.
+line about it, then a short digest of all of them grouped by topic. The Done tab
+opens with the digest ("What changed"), and shows each line, marked "AI summary",
+above the commit's original message. Each commit is read once and saved, so the next
+run only does new ones.
 
 1. From the repo's top folder, list what has no summary yet:
    `python SCRIPT summarize --todo > <scratch dir>/todo.json`. Each entry has a
@@ -227,13 +229,28 @@ original message. Each one is read once and saved, so the next run only does new
    does, in words a teammate who did not write it would understand: "Adds a retry with
    backoff when sync fails", not "Update sync.py". Say only what the change shows. Do
    not guess why, and never copy secrets, keys, or personal data into a line.
-5. Save them in `<scratch dir>/new.json` as
-   `{"commits": {"<full commit id>": "<line>"}, "prs": {"<number>": "<line>"}}`, then
-   run `python SCRIPT summarize --add <scratch dir>/new.json`. It checks every line and
-   writes `.github/dashboard/summaries.yaml`. Never edit that file's ids by hand.
-6. Build the page (Look at it now) and show it. Tell the person to commit
-   `.github/dashboard/summaries.yaml` the way their team commits anything else; the
-   daily Action reads it from then on. A watch list reads it from each watched repo too.
+5. Write the **digest**: what all of the summarized changes (this run's and earlier
+   ones still in the Done tab) did, grouped by topic, not by date. Up to 8 groups,
+   each a short title ("New tools, all off by default") and 2 to 6 plain lines. Say
+   what changed for someone using or working on the repo; leave out commit ids.
+6. Save everything in `<scratch dir>/new.json`:
+
+   ```json
+   {"commits": {"<full commit id>": "<line>"}, "prs": {"<number>": "<line>"},
+    "digest": {"written": "<YYYY-MM-DD>", "covers": "<e.g. the last 40 commits, up to 445641b>",
+               "groups": [{"title": "<topic>", "items": ["<line>", "<line>"]}]}}
+   ```
+
+   then run `python SCRIPT summarize --add <scratch dir>/new.json`. It checks every
+   line and writes `.github/dashboard/summaries.yaml`; a new digest replaces the old
+   one. Never edit that file's ids by hand.
+7. Build the page (Look at it now) and show it: the digest is at the top of the Done
+   tab. In the terminal, give the digest too, then name the summaries that are only
+   your reading because the commit message said little, and how many older commits
+   still have none.
+8. Tell the person to commit `.github/dashboard/summaries.yaml` the way their team
+   commits anything else; the daily Action shows it from then on. A watch list reads
+   it from each watched repo too.
 
 If a line is wrong, the person fixes the text in the file by hand.
 

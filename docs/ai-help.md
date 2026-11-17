@@ -16,8 +16,10 @@ empty-list message instead of crashing when a list has no items". They are saved
 `.github/dashboard/summaries.yaml`. Each commit is read once, so later runs only do
 the new ones.
 
-The Done tab shows the line with a dashed **AI summary** tag, and the original
-message under it. The AI can be wrong; fix a line by editing the file. A watch list
+It also writes a short digest of all of them, grouped by topic ("New tools, all off
+by default", "Fixes", and so on). The Done tab opens with that digest, under **What
+changed**, and shows each commit's line with a dashed **AI summary** tag and the
+original message under it. The AI can be wrong; fix a line by editing the file. A watch list
 reads each watched repo's file too.
 
 The commands behind it, if you want to run them yourself:
@@ -27,7 +29,8 @@ python .github/dashboard/dashboard.py summarize --todo     # what has no summary
 python .github/dashboard/dashboard.py summarize --add new.json
 ```
 
-`new.json` looks like `{"commits": {"<full commit id>": "<line>"}, "prs": {"12": "<line>"}}`.
+`new.json` looks like `{"commits": {"<full commit id>": "<line>"}, "prs": {"12": "<line>"}, "digest": {...}}`;
+the format is at the top of [`dashboard_summaries.py`](../skills/repo-radar/scripts/dashboard_summaries.py).
 
 ## A first plan, drafted from the history
 

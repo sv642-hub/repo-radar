@@ -440,6 +440,28 @@ def _done_row(item: dict[str, Any], data: dict[str, Any]) -> str:
     )
 
 
+def _digest(data: dict[str, Any]) -> str:
+    """What changed lately, grouped by topic: the AI digest from the summaries file, if any."""
+    digest = (data.get("summaries") or {}).get("digest")
+    if not digest:
+        return ""
+    tip = "Written by AI from the changes. It may be wrong; each commit's own message is below."
+    cards = "".join(
+        _card(
+            [f'<li class="item digest" data-search="{_search(group["title"], item)}">{_e(item)}</li>'
+             for item in group["items"]],
+            head=f'<div class="card-head"><div class="card-title">{_e(group["title"])}</div></div>',
+            wide=False,
+        )
+        for group in digest["groups"]
+    )
+    return (
+        f'<details class="section" open><summary><h2>What changed</h2> {_chip("AI summary", "ai", tip)}'
+        f'<span class="sub">covers {_e(digest["covers"])} · written {_e(digest["written"])}</span></summary>'
+        f'<div class="grid">{cards}</div></details>'
+    )
+
+
 def _done_counts(items: list[dict[str, Any]]) -> str:
     """ "2 PRs merged, 1 pushed with no PR": only the kinds this section has."""
     merged = sum(i["kind"] == "pr" and i["state"] == "MERGED" for i in items)
@@ -456,6 +478,7 @@ def _done_tab(data: dict[str, Any]) -> str:
     merged = sum(pr["state"] == "MERGED" for pr in data["closed_prs"])
     not_planned = sum(i.get("stateReason") == "NOT_PLANNED" for i in data["closed_issues"])
     out = [
+        _digest(data),
         _tiles(
             [
                 (merged, "PRs merged"),
@@ -694,6 +717,7 @@ border:1px solid var(--btn-line);color:var(--muted);text-decoration:none;white-s
 .chip.red{border-color:var(--red-line);color:var(--unowned)}
 .chip.label{color:var(--purple);border-color:var(--purple)}
 .chip.ai{border-style:dashed;color:var(--purple);border-color:var(--purple);cursor:help}
+.item.digest{display:list-item;list-style:disc;margin-left:18px}
 .note{color:var(--muted);font-size:12px}
 .people{font-size:12px;color:var(--muted)}
 a{color:var(--link)}

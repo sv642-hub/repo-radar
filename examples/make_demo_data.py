@@ -235,7 +235,21 @@ def mobile_summaries() -> str:
         "commits:",
     ]
     lines += [f"  '{(sha * 40)[:40]}': {json.dumps(text)}" for sha, text in MOBILE_SUMMARIES.items()]
-    return "\n".join([*lines, "prs: {}", ""])
+    lines += [
+        "prs: {}",
+        "digest:",
+        "  written: '2026-11-12'",
+        "  covers: the last 3 commits, up to c4d9c4d",
+        "  groups:",
+        "  - title: Sharing",
+        "    items:",
+        "    - A Share button on the list screen opens the phone's share sheet",
+        "  - title: Fixes and release",
+        "    items:",
+        "    - The app no longer crashes when a list is empty; it shows a message instead",
+        "    - The version is now 1.3, ready for the next store release",
+    ]
+    return "\n".join([*lines, ""])
 
 
 def watch_files() -> dict[str, str]:

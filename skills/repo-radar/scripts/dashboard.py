@@ -157,7 +157,8 @@ def cmd_summarize(args: argparse.Namespace) -> None:
         raise summarizing.SummariesError(f"{args.add}: not valid JSON: {error}") from error
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(summarizing.dump(summarizing.merge(old, new)), encoding="utf-8")
-    logger.info(f"saved {len(new['commits'])} commit and {len(new['prs'])} pull request summaries to {path}")
+    digest = " and a new digest" if new.get("digest") else ""
+    logger.info(f"saved {len(new['commits'])} commit and {len(new['prs'])} pull request summaries{digest} to {path}")
 
 
 def init(repo_dir: Path, plan: Path | None, with_plan: bool, cron: str, force: bool) -> list[Path]:
