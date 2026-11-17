@@ -264,8 +264,15 @@ repo already shows, for the team to fix and keep. It is a draft: never commit it
 6. Write it to `docs/plan.yaml` (or where the person says), and check that it loads:
    `python SCRIPT build --out <scratch dir>/dashboard.html`. Fix any error it names.
 7. Show the page, and tell the person in plain words: how many groups, boxes and
-   items, what you were unsure of, and that the team should check it, add the parts
-   still to build, and set owners before committing it.
+   items, and what you were unsure of.
+8. **Ask what is still to build.** A repo rarely writes down its plans, so a draft
+   often has no `missing` items, and the plan's most useful part is empty. List the
+   groups and boxes, and ask: "What does the team still need to build, or plan to,
+   that the repo does not show yet?" Add each answer as a `missing` item in the box
+   it belongs to; ask which box when it is not clear. Ask too whether they want to set
+   owners now: if they name them, set each `owner` and add the `people` list
+   (owner name → GitHub login). Then check it loads again (step 6) and show the page.
+9. Tell them it is still a draft: the team should check it and commit it themselves.
 
 ## Without network access
 

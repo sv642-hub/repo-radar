@@ -39,7 +39,9 @@ The skill reads the README, the folders, the merged and open pull requests, the
 commits, and the open issues, and writes a draft `docs/plan.yaml`: the parts of the
 system as boxes, each item marked built, a stub, or in an open pull request. It marks
 something missing only when the repo says it is planned (an open issue, a TODO, a
-roadmap), and leaves every owner empty for the team to set.
+roadmap), and leaves every owner empty. Then it shows you the draft and asks what is
+still to build, since most repos never write that down, and adds your answers as
+missing items. If you name owners, it sets them too.
 
 It never commits the draft. Check it with your team, add the parts still to build,
 set owners, then commit it. The Plan tab appears on the next rebuild.
