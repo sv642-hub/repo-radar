@@ -537,13 +537,15 @@ def render(data: dict[str, Any], plan: dict[str, Any] | None, back: str | None =
         ("graph", "Graph", _graph_tab(plan, data)),
         ("done", "Done", _done_tab(data)),
     ]
+    # Open on the first tab, unless there is no plan and nothing open: then on Done, the only tab with news.
+    first = "done" if not plan and not data["open_prs"] and not data["open_issues"] else tabs[0][0]
     buttons = "".join(
-        f'<button type="button" role="tab" id="tab-{key}" aria-controls="{key}" aria-selected="{str(i == 0).lower()}" tabindex="{0 if i == 0 else -1}" data-tab="{key}"{" class=active" if i == 0 else ""}>{_e(label)}</button>'
-        for i, (key, label, _) in enumerate(tabs)
+        f'<button type="button" role="tab" id="tab-{key}" aria-controls="{key}" aria-selected="{str(key == first).lower()}" tabindex="{0 if key == first else -1}" data-tab="{key}"{" class=active" if key == first else ""}>{_e(label)}</button>'
+        for key, label, _ in tabs
     )
     panels = "".join(
-        f'<section role="tabpanel" aria-labelledby="tab-{key}" tabindex="0" class="tab{" active" if i == 0 else ""}" id="{key}">{body}</section>'
-        for i, (key, _, body) in enumerate(tabs)
+        f'<section role="tabpanel" aria-labelledby="tab-{key}" tabindex="0" class="tab{" active" if key == first else ""}" id="{key}">{body}</section>'
+        for key, _, body in tabs
     )
     built = data["fetched_at"].replace("T", " ").removesuffix("Z")
     header = (

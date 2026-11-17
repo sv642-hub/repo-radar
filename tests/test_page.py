@@ -120,3 +120,18 @@ def test_done_sections_count_only_the_kinds_they_have(demo_data: dict) -> None:
     assert page._done_counts([{"kind": "pr", "state": "MERGED"}, {"kind": "issue"}, {"kind": "issue"}]) == (
         "1 PR merged, 2 issues closed"
     )
+
+
+def _opens_on(html: str) -> str:
+    """The data-tab of the tab button marked active."""
+    return html.split(" class=active>")[0].rsplit('data-tab="', 1)[1].split('"')[0]
+
+
+def test_the_page_opens_on_done_only_when_nothing_is_open(demo_data: dict, demo_plan: dict) -> None:
+    assert _opens_on(page.render(demo_data, None)) == "prs"
+    assert _opens_on(page.render(demo_data, demo_plan)) == "plan"
+    quiet = {**demo_data, "open_prs": [], "open_issues": []}
+    html = page.render(quiet, None)
+    assert _opens_on(html) == "done"
+    assert html.count('class="tab active"') == 1 and 'class="tab active" id="done"' in html
+    assert _opens_on(page.render(quiet, demo_plan)) == "plan"
